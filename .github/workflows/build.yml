@@ -24,12 +24,12 @@ jobs:
       - name: Install cross
         uses: taiki-e/install-action@cross
 
-      - name: Build generic aarch64-linux-android
-        run: cross build --release --target aarch64-linux-android --no-default-features --features "file-watcher, metrics, prometheus, push-notifications, qmd, tailscale, tls, voice, web-ui"
+      - name: Build static aarch64-musl
+        run: cross build --release --target aarch64-unknown-linux-musl --no-default-features --features "file-watcher, metrics, prometheus, push-notifications, qmd, tailscale, tls, voice, web-ui"
 
       - name: Package binary
         run: |
-          tar -czvf moltis-termux-aarch64.tar.gz -C target/aarch64-linux-android/release moltis
+          tar -czvf moltis-termux-aarch64.tar.gz -C target/aarch64-unknown-linux-musl/release moltis
 
       - name: Release Termux Binary
         uses: softprops/action-gh-release@v2
