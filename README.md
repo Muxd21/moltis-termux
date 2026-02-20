@@ -74,5 +74,17 @@ rm $PREFIX/bin/moltis*
 rm -rf ~/.moltis
 ```
 
+## Troubleshooting
+
+### VS Code "Exit Code 207" or "Node not found"
+VS Code Remote-SSH often fails on the first connection because it expects a standard Linux environment.
+
+1.  Connect from your PC and let it **fail**.
+2.  On your phone, run: `moltis-fix-vscode`.
+3.  Click **Retry** in VS Code. It will now work.
+
+### Permission Denied
+If you get a permission error when running `moltis`, you are likely using the outdated Play Store version of Termux. **Uninstall it and install the version from F-Droid.**
+
 ## License
 MIT
