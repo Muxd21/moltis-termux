@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Moltis on Android | Technical Deep Dive</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --bg: #0a0b10;
@@ -17,6 +20,7 @@
             --text-dim: #94a3b8;
             --glass: rgba(22, 26, 35, 0.7);
             --border: rgba(255, 255, 255, 0.1);
+            --success: #10b981;
         }
 
         * {
@@ -39,7 +43,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: 
+            background:
                 radial-gradient(circle at 20% 20%, rgba(0, 242, 255, 0.05) 0%, transparent 40%),
                 radial-gradient(circle at 80% 80%, rgba(147, 51, 234, 0.05) 0%, transparent 40%);
             z-index: -1;
@@ -64,8 +68,17 @@
         }
 
         @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.05); opacity: 1; }
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
         }
 
         h1 {
@@ -93,9 +106,22 @@
         }
 
         @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-10px); }
-            60% { transform: translateY(-5px); }
+
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translateY(0);
+            }
+
+            40% {
+                transform: translateY(-10px);
+            }
+
+            60% {
+                transform: translateY(-5px);
+            }
         }
 
         main {
@@ -140,7 +166,7 @@
             padding: 2.5rem;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(10px);
         }
 
@@ -177,7 +203,7 @@
 
         .tech-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
             gap: 1.5rem;
             margin-top: 2rem;
         }
@@ -187,12 +213,15 @@
             background: rgba(255, 255, 255, 0.03);
             border-radius: 16px;
             border: 1px solid var(--border);
-            text-align: center;
+            text-align: left;
         }
 
         .tech-item h3 {
             color: var(--accent);
             margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .footer {
@@ -220,80 +249,151 @@
             box-shadow: 0 0 30px var(--accent-glow);
         }
 
+        ul {
+            list-style: none;
+            margin-bottom: 1.5rem;
+        }
+
+        li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+        }
+
         @media (max-width: 600px) {
-            main { padding: 2rem 1rem; }
-            .card { padding: 1.5rem; }
+            main {
+                padding: 2rem 1rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="gradient-bg"></div>
 
     <header>
         <img src="images/openclaw.svg" alt="Moltis Logo" class="moltis-logo">
         <h1>Moltis Android</h1>
-        <p class="subtitle">The definitive technical guide to running a native Rust AI Gateway on Termux with zero overhead.</p>
+        <p class="subtitle">The definitive technical guide to running a native Rust AI Gateway on Termux with zero
+            overhead.</p>
         <a href="#content" class="scroll-indicator">↓</a>
     </header>
 
     <main id="content">
         <section class="visible">
-            <h2>The Challenge</h2>
+            <h2>The Architecture</h2>
             <div class="card">
-                <p>Running native binaries on Android is deceptively complex. While Android uses the Linux kernel, its userspace environment is powered by <span class="highlight">Bionic libc</span>, not the standard <span class="highlight">Glibc</span> found on desktop Linux.</p>
-                <p>When you try to execute a standard Rust binary, the system fails with a cryptic <code>required file not found</code> error because it cannot find the dynamic linkers expected by the binary.</p>
+                <p>Running native binaries on Android is deceptively complex. While Android uses the Linux kernel, its
+                    userspace environment is powered by <span class="highlight">Bionic libc</span>, not the standard
+                    <span class="highlight">Glibc</span> found on desktop Linux.</p>
+                <p>Most "Moltis on Android" guides force you to install a 1.5GB Ubuntu distribution using
+                    <code>proot-distro</code>. This adds massive overhead and latency.</p>
+                <p>We chose the hard way: <span class="highlight">Native Execution</span>. No containers, no emulation,
+                    just raw performance.</p>
             </div>
         </section>
 
         <section>
             <h2>The Solution: Static Musl</h2>
             <div class="card">
-                <p>To solve the compatibility barrier, we pivoted to an <span class="highlight">aarch64-unknown-linux-musl</span> target. Unlike standard builds, Musl allows for a <strong>fully static binary</strong>.</p>
-                <p>By forcing the C Runtime into the binary itself (<code>target-feature=+crt-static</code>), we produced a standalone executable that carries its own dependencies. It doesn't care about Android's lack of Glibc—it just runs.</p>
-                
+                <p>To solve the compatibility barrier, we pivoted to an <span
+                        class="highlight">aarch64-unknown-linux-musl</span> target. Unlike standard builds, Musl allows
+                    for a <strong>fully static binary</strong>.</p>
+                <p>By forcing the C Runtime into the binary itself (<code>target-feature=+crt-static</code>), we
+                    produced a standalone executable that carries its own dependencies. It doesn't care about Android's
+                    lack of Glibc—it just runs.</p>
+
                 <div class="tech-grid">
                     <div class="tech-item">
                         <h3>Static CRT</h3>
-                        <p>No external dependencies required.</p>
+                        <p>No external dynamic linkers required. Truly portable.</p>
                     </div>
                     <div class="tech-item">
-                        <h3>Zero Bloat</h3>
-                        <p>No Proot/Ubuntu environment needed.</p>
+                        <h3>Zero Proot</h3>
+                        <p>Uses ~20MB of storage instead of 2GB for Ubuntu.</p>
                     </div>
                     <div class="tech-item">
                         <h3>Native Speed</h3>
-                        <p>Direct syscalls to the Android kernel.</p>
+                        <p>Direct syscalls to the Android kernel. Zero latency overhead.</p>
                     </div>
                 </div>
             </div>
         </section>
 
         <section>
-            <h2>The Automation Pipeline</h2>
+            <h2>The "Goated" Tunnel</h2>
             <div class="card">
-                <p>We didn't want users to wait 20 minutes for their phone to compile Rust. We moved the heavy lifting to the cloud.</p>
-                <p>Using <span class="highlight">GitHub Actions</span>, we created an automated CI that:</p>
+                <p>Development on a phone usually means struggling with SSH keys, port forwarding, and unstable
+                    connections. We implemented the <span class="highlight">VS Code Remote Tunnel</span> (Goat Edition).
+                </p>
+                <p>Instead of standard SSH, we use the <strong>Native VS Code CLI (Alpine/Musl)</strong> directly inside
+                    Termux. This creates an encrypted bridge that lets you connect your PC browser or VS Code desktop to
+                    your phone with one click.</p>
                 <ul>
-                    <li style="margin-left: 20px; color: var(--text-dim);">Monitors the official Moltis repository every 24 hours.</li>
-                    <li style="margin-left: 20px; color: var(--text-dim);">Cross-compiles for the Termux target using High-Power runners.</li>
-                    <li style="margin-left: 20px; color: var(--text-dim);">Releases a pre-packaged tarball directly to your repo.</li>
+                    <li>No SSH Password prompts.</li>
+                    <li>No Port Forwarding required.</li>
+                    <li>Full VS Code Desktop performance.</li>
                 </ul>
-                <p style="margin-top: 1rem;">The result? Installation dropped from <span class="highlight">30 minutes</span> of compiling to <span class="highlight">15 seconds</span> of downloading.</p>
+                <div class="tech-item" style="margin-top: 1rem; border: 1px dashed var(--accent);">
+                    <code>moltis-tunnel</code> - Command to start the secure bridge.
+                </div>
             </div>
         </section>
 
         <section>
-            <h2>The Smart Environment</h2>
+            <h2>Cloud-Powered CI/CD</h2>
             <div class="card">
-                <p>Making the binary run was only half the battle. We also integrated the developer experience.</p>
-                <p>Our custom <code>moltis-up</code> command handles the entire stack. It doesn't just start the gateway; it handles <strong>CPU Wake-Locks</strong> to prevent Android from killing the task and live-patches <strong>VS Code Remote-SSH</strong> server binaries using <code>patchelf</code>.</p>
-                <a href="https://github.com/Muxd21/moltis-termux" class="btn">View Github Repo</a>
+                <p>Compiling Moltis on a phone can take 30+ minutes and drain the battery. We automated the entire build
+                    process using <span class="highlight">GitHub Actions</span>.</p>
+                <p>Our automated pipeline:</p>
+                <ul>
+                    <li>Checks the official Moltis repo every 24 hours.</li>
+                    <li>Automatically cross-compiles for the Android target.</li>
+                    <li>Injects specific Android patches (PIE fixes, Node-swapping).</li>
+                    <li>Pushes a fresh <code>moltis-termux-aarch64.tar.gz</code> release.</li>
+                </ul>
+                <p>You stay on the cutting edge of AI, effortlessly.</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>Smart Automation</h2>
+            <div class="card">
+                <p>Our custom shell toolset makes your phone a professional AI workstation.</p>
+                <div class="tech-grid">
+                    <div class="tech-item">
+                        <h3>moltis-up</h3>
+                        <p>The "All-In-One" command. Handles SSH, CPU Wake-Locks, and Gateway startup.</p>
+                    </div>
+                    <div class="tech-item">
+                        <h3>moltis-fix-vscode</h3>
+                        <p>The "Node Swapper". Automatically repairs VS Code environment for Android-exclusive PIE
+                            security.</p>
+                    </div>
+                    <div class="tech-item">
+                        <h3>moltis-update</h3>
+                        <p>Syncs your local binary with our automated cloud builds.</p>
+                    </div>
+                </div>
+                <a href="https://github.com/Muxd21/moltis-termux" class="btn">Explore the Repo</a>
             </div>
         </section>
     </main>
 
     <div class="footer">
-        <p>Built for the Moltis Community. Designed for Performance.</p>
+        <p>Built for the Moltis Community. Engineering for the Future.</p>
     </div>
 
     <script>
@@ -310,4 +410,5 @@
         });
     </script>
 </body>
+
 </html>
