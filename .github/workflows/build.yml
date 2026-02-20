@@ -1,0 +1,41 @@
+name: Build Moltis Android Binary
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      moltis_version:
+        description: 'Moltis version to build (e.g. v0.9.5)'
+        required: true
+        default: 'v0.9.5'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Moltis Repo
+        uses: actions/checkout@v4
+        with:
+          repository: moltis-org/moltis
+          ref: ${{ github.event.inputs.moltis_version || 'v0.9.5' }}
+
+      - name: Install cross
+        uses: taiki-e/install-action@cross
+
+      - name: Build generic aarch64-linux-android
+        run: cross build --release --target aarch64-linux-android
+
+      - name: Package binary
+        run: |
+          tar -czvf moltis-termux-aarch64.tar.gz -C target/aarch64-linux-android/release moltis
+
+      - name: Release Termux Binary
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.moltis_version || 'v0.9.5' }}-termux
+          name: Termux Build ${{ github.event.inputs.moltis_version || 'v0.9.5' }}
+          files: moltis-termux-aarch64.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
