@@ -145,3 +145,27 @@ If you wish to remove Moltis, you simply delete the executable and data:
 rm $PREFIX/bin/moltis
 rm -rf ~/.moltis
 ```
+
+## VS Code Remote SSH (Tailscale)
+
+Connect to your phone's development environment seamlessly from your PC:
+
+1.  Open your SSH config on your PC (usually ~/.ssh/config).
+2.  Add this block (replace with your IP):
+
+\\\ssh
+Host phone
+    HostName 100.76.136.73
+    Port 8022
+    User termux
+\\\
+
+3.  In VS Code, press \F1\ -> \Remote-SSH: Connect to Host...\ -> Select \phone\.
+
+## Useful Commands
+
+| Command | Action |
+| --- | --- |
+| \moltis-up\ | Starts SSH (sshd), prevents sleep, and starts the gateway |
+| \moltis-update\ | Pulls the latest static binary from GitHub |
+| \moltis --version\ | Checks your current version |

@@ -1,6 +1,8 @@
 name: Build Moltis Android Binary
 
 on:
+  schedule:
+    - cron: '0 0 * * *' # Runs daily at midnight to check for new versions
   push:
     branches:
       - main
@@ -15,14 +17,38 @@ permissions:
   contents: write
 
 jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      latest_version: ${{ steps.get-version.outputs.version }}
+      should_build: ${{ steps.check.outputs.should_build }}
+    steps:
+      - id: get-version
+        run: |
+          VERSION=$(curl -s https://api.github.com/repos/moltis-org/moltis/releases/latest | jq -r .tag_name)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Check if already built
+        id: check
+        run: |
+          TAG="${{ steps.get-version.outputs.version }}-termux"
+          EXISTS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/$TAG | jq -r .tag_name)
+          if [ "$EXISTS" == "null" ]; then
+            echo "should_build=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_build=false" >> $GITHUB_OUTPUT
+          fi
+
   build:
+    needs: check-version
+    if: needs.check-version.outputs.should_build == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Moltis Repo
         uses: actions/checkout@v4
         with:
           repository: moltis-org/moltis
-          ref: ${{ github.event.inputs.moltis_version || 'v0.9.7' }}
+          ref: ${{ github.event.inputs.moltis_version || needs.check-version.outputs.latest_version }}
 
       - name: Install cross
         uses: taiki-e/install-action@cross
@@ -39,8 +65,8 @@ jobs:
       - name: Release Termux Binary
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.moltis_version || 'v0.9.7' }}-termux
-          name: Termux Build ${{ github.event.inputs.moltis_version || 'v0.9.7' }}
+          tag_name: ${{ github.event.inputs.moltis_version || needs.check-version.outputs.latest_version }}-termux
+          name: Termux Build ${{ github.event.inputs.moltis_version || needs.check-version.outputs.latest_version }}
           files: moltis-termux-aarch64.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
