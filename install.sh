@@ -9,9 +9,9 @@ NC='\033[0m'
 
 echo -e "${GREEN}Preparing Moltis + VS Code environment for Termux...${NC}"
 
-# Install core dependencies
+# Install core dependencies (Added coreutils for getconf)
 pkg update -y
-pkg install -y curl wget tar openssl binutils termux-api patchelf
+pkg install -y curl wget tar openssl binutils termux-api patchelf coreutils
 
 # 1. Setup VS Code Remote-SSH Shims
 if [ ! -f "$PREFIX/bin/ldd" ]; then
@@ -43,21 +43,23 @@ rm -f "$PREFIX/tmp/moltis-termux.tar.gz"
 # Create Moltis Helpers
 echo -e "${GREEN}Updating helper commands...${NC}"
 
-# 1. moltis-fix-vscode
+# 1. moltis-fix-vscode (Aggressive Patcher)
 cat <<EOF > "$PREFIX/bin/moltis-fix-vscode"
 #!/usr/bin/env bash
 BIN_DIR=\$HOME/.vscode-server/bin
 if [ -d "\$BIN_DIR" ]; then
-    echo "Patching VS Code Server binaries..."
+    echo "Scanning for VS Code Server binaries..."
     for dir in "\$BIN_DIR"/*; do
         if [ -f "\$dir/node" ]; then
-            # Only patch if not already patched
             if ! patchelf --print-interpreter "\$dir/node" 2>/dev/null | grep -q "/system/bin/linker64"; then
-                echo "Applying link fix to \$dir/node"
+                echo "Patching node in \$dir..."
                 patchelf --set-interpreter /system/bin/linker64 "\$dir/node"
             fi
         fi
     done
+    echo "VS Code environment is now patched for Termux."
+else
+    echo "VS Code Server not found. Connect from PC first, let it fail, then run this."
 fi
 EOF
 chmod +x "$PREFIX/bin/moltis-fix-vscode"
@@ -65,15 +67,11 @@ chmod +x "$PREFIX/bin/moltis-fix-vscode"
 # 2. moltis-up (The All-In-One command)
 cat <<EOF > "$PREFIX/bin/moltis-up"
 #!/usr/bin/env bash
-# Fire up SSH
 sshd
-# Prevent Android from killing the process
 termux-wake-lock
-# Auto-patch VS Code if someone tries to connect
-moltis-fix-vscode
+moltis-fix-vscode > /dev/null 2>&1
 echo -e "${GREEN}Moltis Status:${NC} Online"
 echo -e "${GREEN}SSH Status:${NC}    Online (Port 8022)"
-echo ""
 echo "Starting Gateway..."
 moltis
 EOF
@@ -86,7 +84,7 @@ curl -fsSL https://raw.githubusercontent.com/Muxd21/moltis-termux/main/install.s
 EOF
 chmod +x "$PREFIX/bin/moltis-update"
 
-echo -e "\n${GREEN}One-Command Setup Complete!${NC}"
+echo -e "\n${GREEN}Setup Updated!${NC}"
 echo "--------------------------------------------------------"
-echo -e "Simply run: ${GREEN}moltis-up${NC}"
+echo -e "If VS Code fails to connect: Run ${GREEN}moltis-fix-vscode${NC} on your phone."
 echo "--------------------------------------------------------"
