@@ -9,9 +9,9 @@ NC='\033[0m'
 
 echo -e "${GREEN}Preparing Moltis + VS Code environment for Termux...${NC}"
 
-# Install core dependencies (Added coreutils for getconf)
+# Install core dependencies (Added nodejs and coreutils)
 pkg update -y
-pkg install -y curl wget tar openssl binutils termux-api patchelf coreutils
+pkg install -y curl wget tar openssl binutils termux-api coreutils nodejs
 
 # 1. Setup VS Code Remote-SSH Shims
 if [ ! -f "$PREFIX/bin/ldd" ]; then
@@ -43,21 +43,23 @@ rm -f "$PREFIX/tmp/moltis-termux.tar.gz"
 # Create Moltis Helpers
 echo -e "${GREEN}Updating helper commands...${NC}"
 
-# 1. moltis-fix-vscode (Aggressive Patcher)
+# 1. moltis-fix-vscode (The "Node Swapper")
 cat <<EOF > "$PREFIX/bin/moltis-fix-vscode"
 #!/usr/bin/env bash
 BIN_DIR=\$HOME/.vscode-server/bin
 if [ -d "\$BIN_DIR" ]; then
-    echo "Scanning for VS Code Server binaries..."
+    echo "Swapping VS Code Node with Native Termux Node..."
     for dir in "\$BIN_DIR"/*; do
-        if [ -f "\$dir/node" ]; then
-            if ! patchelf --print-interpreter "\$dir/node" 2>/dev/null | grep -q "/system/bin/linker64"; then
-                echo "Patching node in \$dir..."
-                patchelf --set-interpreter /system/bin/linker64 "\$dir/node"
+        if [ -d "\$dir/bin" ] && [ -f "\$dir/node" ]; then
+            # We rename the original node if it's not a symlink yet
+            if [ ! -L "\$dir/node" ]; then
+                mv "\$dir/node" "\$dir/node.broken"
+                ln -s "\$PREFIX/bin/node" "\$dir/node"
+                echo "Swapped node in \$dir"
             fi
         fi
     done
-    echo "VS Code environment is now patched for Termux."
+    echo "VS Code environment is now using Native Termux Node.js."
 else
     echo "VS Code Server not found. Connect from PC first, let it fail, then run this."
 fi
@@ -86,5 +88,6 @@ chmod +x "$PREFIX/bin/moltis-update"
 
 echo -e "\n${GREEN}Setup Updated!${NC}"
 echo "--------------------------------------------------------"
-echo -e "If VS Code fails to connect: Run ${GREEN}moltis-fix-vscode${NC} on your phone."
+echo -e "1. Run: ${GREEN}moltis-up${NC}"
+echo -e "2. If VS Code shows 'PIE error': Run ${GREEN}moltis-fix-vscode${NC}"
 echo "--------------------------------------------------------"
