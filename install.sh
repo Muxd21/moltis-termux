@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Moltis Installer for Android (Termux) - STEALTH FIX VERSION
+# Moltis Installer for Android (Termux) - FINAL GHOST SHIM VERSION
 
 set -euo pipefail
 
@@ -9,33 +9,20 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 echo -e "${CYAN}-------------------------------------------------------${NC}"
-echo -e "${GREEN}Moltis on Android: Applying Stealth Shims${NC}"
+echo -e "${GREEN}Moltis on Android: The Final Frontier Fix${NC}"
 echo -e "${CYAN}-------------------------------------------------------${NC}"
 
 # Install core dependencies
 pkg update -y
-pkg install -y curl wget tar openssl binutils termux-api coreutils nodejs patchelf libc++ || true
+pkg install -y curl wget tar openssl binutils termux-api coreutils nodejs libc++ || true
 
-# 1. Setup VS Code / Linux Shims
-echo "Creating environment shims..."
-# Dummy ldd
-if [ ! -f "$PREFIX/bin/ldd" ]; then
-    echo '#!/usr/bin/env bash' > "$PREFIX/bin/ldd"
-    echo 'echo "libc.so.6 => /system/lib64/libc.so (0x0000000000000000)"' >> "$PREFIX/bin/ldd"
-    echo 'echo "/lib/ld-musl-aarch64.so.1 => /system/bin/linker64 (0x0000000000000000)"' >> "$PREFIX/bin/ldd"
-    chmod +x "$PREFIX/bin/ldd"
-fi
-
-# Dummy ldconfig
+# 1. Setup Environment Shims
+echo "Creating GHOST shims..."
+# Dummy ldconfig (VS Code checks for this)
 if [ ! -f "$PREFIX/bin/ldconfig" ]; then
     echo '#!/usr/bin/env bash' > "$PREFIX/bin/ldconfig"
     echo 'exit 0' >> "$PREFIX/bin/ldconfig"
     chmod +x "$PREFIX/bin/ldconfig"
-fi
-
-# C++ Library Symlink
-if [ ! -f "$PREFIX/lib/libstdc++.so.6" ]; then
-    ln -sf "$PREFIX/lib/libc++.so" "$PREFIX/lib/libstdc++.so.6"
 fi
 
 # 2. Grab the latest Termux build of Moltis
@@ -57,20 +44,18 @@ mv "$PREFIX/tmp/moltis" "$PREFIX/bin/moltis"
 chmod +x "$PREFIX/bin/moltis"
 rm -f "$PREFIX/tmp/moltis-termux.tar.gz"
 
-# 3. Setup VS Code CLI (The GOAT Tunnel)
+# 3. Setup VS Code CLI
 echo "Installing VS Code CLI..."
 curl -sL "https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-arm64" -o "$PREFIX/tmp/vscode_cli.tar.gz"
 tar -xzf "$PREFIX/tmp/vscode_cli.tar.gz" -C "$PREFIX/bin"
 rm "$PREFIX/tmp/vscode_cli.tar.gz"
 
-# PATCH THE VSCODE BINARY TO USE ANDROID LINKER
-echo "Patching VS Code binary for Android compatibility..."
-patchelf --set-interpreter /system/bin/linker64 "$PREFIX/bin/code"
+# Create Moltis Helpers
+echo -e "${GREEN}Updating helper commands...${NC}"
 
-# Helper: The Ultimate Maintenance Tool
+# Helper: The SSH Patcher (unchanged)
 cat <<EOF > "$PREFIX/bin/moltis-fix-vscode"
 #!/usr/bin/env bash
-# Fix SSH Server Binaries
 BIN_DIR=\$HOME/.vscode-server/bin
 if [ -d "\$BIN_DIR" ]; then
     for dir in "\$BIN_DIR"/*; do
@@ -79,10 +64,6 @@ if [ -d "\$BIN_DIR" ]; then
             ln -s "\$PREFIX/bin/node" "\$dir/node"
         fi
     done
-fi
-# Re-patch local code binary if it was updated
-if [ -f "\$PREFIX/bin/code" ]; then
-    patchelf --set-interpreter /system/bin/linker64 "\$PREFIX/bin/code" 2>/dev/null || true
 fi
 EOF
 chmod +x "$PREFIX/bin/moltis-fix-vscode"
@@ -93,22 +74,25 @@ cat <<EOF > "$PREFIX/bin/moltis-up"
 sshd
 termux-wake-lock
 moltis-fix-vscode > /dev/null 2>&1
-nohup code tunnel > /dev/null 2>&1 &
+# Start tunnel silently with the prerequisite-skip flag
+DONT_PROMPT_WSL_INSTALL=true VSCODE_SKIP_PREREQUISITES=1 nohup code tunnel > /dev/null 2>&1 &
 echo -e "${GREEN}Moltis Gateway starting...${NC}"
-echo -e "Tunnel running in background."
 moltis
 EOF
 chmod +x "$PREFIX/bin/moltis-up"
 
-# Helper: Tunnel Starter
+# Helper: Tunnel Starter with Environment Overrides
+# This uses the hidden flags that VS Code devs use to bypass checks
 cat <<EOF > "$PREFIX/bin/moltis-tunnel"
 #!/usr/bin/env bash
-echo -e "${CYAN}Starting VS Code Tunnel...${NC}"
+echo -e "${CYAN}Starting VS Code Tunnel (Prerequisite Bypass Mode)...${NC}"
+export VSCODE_SKIP_PREREQUISITES=1
+export DONT_PROMPT_WSL_INSTALL=true
 code tunnel
 EOF
 chmod +x "$PREFIX/bin/moltis-tunnel"
 
-# Helper: Update
+# Helper: Global Update
 cat <<EOF > "$PREFIX/bin/moltis-update"
 #!/usr/bin/env bash
 curl -fsSL https://raw.githubusercontent.com/Muxd21/moltis-termux/main/install.sh | bash
@@ -117,5 +101,5 @@ chmod +x "$PREFIX/bin/moltis-update"
 
 echo -e "\n${GREEN}Setup Updated!${NC}"
 echo "--------------------------------------------------------"
-echo -e "Try running: ${GREEN}moltis-tunnel${NC}"
+echo -e "Try: ${GREEN}moltis-tunnel${NC}"
 echo "--------------------------------------------------------"
