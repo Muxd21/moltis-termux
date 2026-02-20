@@ -21,7 +21,7 @@ An Android phone is a great environment for running an moltis server:
 
 The standard approach to running native tools on Android requires installing proot-distro with Ubuntu, adding 700MB-1GB of overhead. Because official Moltis binary releases (`aarch64-unknown-linux-gnu`) rely on `glibc`, they cannot execute natively on Android's custom `Bionic` libc environment out of the box ("cannot execute: required file not found"). 
 
-**Moltis on Android eliminates this by automatically compiling a native standalone Rust binary for Termux (`aarch64-linux-android`) inside a high-performance GitHub Actions workflow and streaming it to your device**. This gives you full native performance at a fraction of the cost, with no `cargo` compiling locally required!
+**Moltis on Android eliminates this by automatically compiling a native standalone Rust binary for Termux (`aarch64-unknown-linux-musl`) inside a high-performance GitHub Actions workflow and streaming it to your device**. This gives you full native performance at a fraction of the cost, with no `cargo` compiling locally required!
 
 | | Standard (proot-distro) | Pure Termux (Moltis Native) |
 |---|---|---|
