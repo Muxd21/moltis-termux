@@ -85,6 +85,7 @@
             font-size: clamp(2.5rem, 8vw, 5rem);
             font-weight: 800;
             background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 1rem;
@@ -284,7 +285,7 @@
     <div class="gradient-bg"></div>
 
     <header>
-        <img src="images/openclaw.svg" alt="Moltis Logo" class="moltis-logo">
+        <img src="images/moltis-logo.svg" alt="Moltis Logo" class="moltis-logo">
         <h1>Moltis Android</h1>
         <p class="subtitle">The definitive technical guide to running a native Rust AI Gateway on Termux with zero
             overhead.</p>
@@ -297,9 +298,11 @@
             <div class="card">
                 <p>Running native binaries on Android is deceptively complex. While Android uses the Linux kernel, its
                     userspace environment is powered by <span class="highlight">Bionic libc</span>, not the standard
-                    <span class="highlight">Glibc</span> found on desktop Linux.</p>
+                    <span class="highlight">Glibc</span> found on desktop Linux.
+                </p>
                 <p>Most "Moltis on Android" guides force you to install a 1.5GB Ubuntu distribution using
-                    <code>proot-distro</code>. This adds massive overhead and latency.</p>
+                    <code>proot-distro</code>. This adds massive overhead and latency.
+                </p>
                 <p>We chose the hard way: <span class="highlight">Native Execution</span>. No containers, no emulation,
                     just raw performance.</p>
             </div>
