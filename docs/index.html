@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moltis on Android | Technical Deep Dive</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0b10;
+            --surface: #161a23;
+            --accent: #00f2ff;
+            --accent-glow: rgba(0, 242, 255, 0.3);
+            --text: #e0e6ed;
+            --text-dim: #94a3b8;
+            --glass: rgba(22, 26, 35, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .gradient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(0, 242, 255, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(147, 51, 234, 0.05) 0%, transparent 40%);
+            z-index: -1;
+        }
+
+        header {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .moltis-logo {
+            width: 120px;
+            filter: drop-shadow(0 0 20px var(--accent-glow));
+            margin-bottom: 2rem;
+            animation: pulse 4s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+            letter-spacing: -2px;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-dim);
+            max-width: 600px;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2rem;
+            animation: bounce 2s infinite;
+            color: var(--accent);
+            font-size: 2rem;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        section {
+            margin-bottom: 8rem;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease-out;
+        }
+
+        section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        h2::before {
+            content: '';
+            width: 40px;
+            height: 4px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(135deg, transparent 50%, rgba(0, 242, 255, 0.05) 100%);
+            pointer-events: none;
+        }
+
+        p {
+            font-size: 1.1rem;
+            color: var(--text-dim);
+            margin-bottom: 1.5rem;
+        }
+
+        .highlight {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(0, 242, 255, 0.1);
+            color: var(--accent);
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .tech-item {
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .tech-item h3 {
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 4rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-dim);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            background: var(--accent);
+            color: #000;
+            text-decoration: none;
+            border-radius: 100px;
+            font-weight: 700;
+            margin-top: 2rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px var(--accent-glow);
+        }
+
+        @media (max-width: 600px) {
+            main { padding: 2rem 1rem; }
+            .card { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="gradient-bg"></div>
+
+    <header>
+        <img src="images/openclaw.svg" alt="Moltis Logo" class="moltis-logo">
+        <h1>Moltis Android</h1>
+        <p class="subtitle">The definitive technical guide to running a native Rust AI Gateway on Termux with zero overhead.</p>
+        <a href="#content" class="scroll-indicator">↓</a>
+    </header>
+
+    <main id="content">
+        <section class="visible">
+            <h2>The Challenge</h2>
+            <div class="card">
+                <p>Running native binaries on Android is deceptively complex. While Android uses the Linux kernel, its userspace environment is powered by <span class="highlight">Bionic libc</span>, not the standard <span class="highlight">Glibc</span> found on desktop Linux.</p>
+                <p>When you try to execute a standard Rust binary, the system fails with a cryptic <code>required file not found</code> error because it cannot find the dynamic linkers expected by the binary.</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>The Solution: Static Musl</h2>
+            <div class="card">
+                <p>To solve the compatibility barrier, we pivoted to an <span class="highlight">aarch64-unknown-linux-musl</span> target. Unlike standard builds, Musl allows for a <strong>fully static binary</strong>.</p>
+                <p>By forcing the C Runtime into the binary itself (<code>target-feature=+crt-static</code>), we produced a standalone executable that carries its own dependencies. It doesn't care about Android's lack of Glibc—it just runs.</p>
+                
+                <div class="tech-grid">
+                    <div class="tech-item">
+                        <h3>Static CRT</h3>
+                        <p>No external dependencies required.</p>
+                    </div>
+                    <div class="tech-item">
+                        <h3>Zero Bloat</h3>
+                        <p>No Proot/Ubuntu environment needed.</p>
+                    </div>
+                    <div class="tech-item">
+                        <h3>Native Speed</h3>
+                        <p>Direct syscalls to the Android kernel.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>The Automation Pipeline</h2>
+            <div class="card">
+                <p>We didn't want users to wait 20 minutes for their phone to compile Rust. We moved the heavy lifting to the cloud.</p>
+                <p>Using <span class="highlight">GitHub Actions</span>, we created an automated CI that:</p>
+                <ul>
+                    <li style="margin-left: 20px; color: var(--text-dim);">Monitors the official Moltis repository every 24 hours.</li>
+                    <li style="margin-left: 20px; color: var(--text-dim);">Cross-compiles for the Termux target using High-Power runners.</li>
+                    <li style="margin-left: 20px; color: var(--text-dim);">Releases a pre-packaged tarball directly to your repo.</li>
+                </ul>
+                <p style="margin-top: 1rem;">The result? Installation dropped from <span class="highlight">30 minutes</span> of compiling to <span class="highlight">15 seconds</span> of downloading.</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>The Smart Environment</h2>
+            <div class="card">
+                <p>Making the binary run was only half the battle. We also integrated the developer experience.</p>
+                <p>Our custom <code>moltis-up</code> command handles the entire stack. It doesn't just start the gateway; it handles <strong>CPU Wake-Locks</strong> to prevent Android from killing the task and live-patches <strong>VS Code Remote-SSH</strong> server binaries using <code>patchelf</code>.</p>
+                <a href="https://github.com/Muxd21/moltis-termux" class="btn">View Github Repo</a>
+            </div>
+        </section>
+    </main>
+
+    <div class="footer">
+        <p>Built for the Moltis Community. Designed for Performance.</p>
+    </div>
+
+    <script>
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('section').forEach(section => {
+            observer.observe(section);
+        });
+    </script>
+</body>
+</html>
