@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Moltis Installer for Android (Termux) - POWERFUL TWO-COMMAND VERSION
+# Moltis Installer for Android (Termux) - STEALTH FIX VERSION
 
 set -euo pipefail
 
@@ -9,19 +9,33 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 echo -e "${CYAN}-------------------------------------------------------${NC}"
-echo -e "${GREEN}Moltis on Android: The Ultimate AI Workstation${NC}"
+echo -e "${GREEN}Moltis on Android: Applying Stealth Shims${NC}"
 echo -e "${CYAN}-------------------------------------------------------${NC}"
 
 # Install core dependencies
-# We ignore errors on non-essential packages for ChromeOS compatibility
 pkg update -y
-pkg install -y curl wget tar openssl binutils termux-api coreutils nodejs || true
+pkg install -y curl wget tar openssl binutils termux-api coreutils nodejs patchelf libc++ || true
 
-# 1. Setup VS Code Remote-SSH Shims (The Ghost Library)
+# 1. Setup VS Code / Linux Shims
+echo "Creating environment shims..."
+# Dummy ldd
 if [ ! -f "$PREFIX/bin/ldd" ]; then
     echo '#!/usr/bin/env bash' > "$PREFIX/bin/ldd"
     echo 'echo "libc.so.6 => /system/lib64/libc.so (0x0000000000000000)"' >> "$PREFIX/bin/ldd"
+    echo 'echo "/lib/ld-musl-aarch64.so.1 => /system/bin/linker64 (0x0000000000000000)"' >> "$PREFIX/bin/ldd"
     chmod +x "$PREFIX/bin/ldd"
+fi
+
+# Dummy ldconfig
+if [ ! -f "$PREFIX/bin/ldconfig" ]; then
+    echo '#!/usr/bin/env bash' > "$PREFIX/bin/ldconfig"
+    echo 'exit 0' >> "$PREFIX/bin/ldconfig"
+    chmod +x "$PREFIX/bin/ldconfig"
+fi
+
+# C++ Library Symlink
+if [ ! -f "$PREFIX/lib/libstdc++.so.6" ]; then
+    ln -sf "$PREFIX/lib/libc++.so" "$PREFIX/lib/libstdc++.so.6"
 fi
 
 # 2. Grab the latest Termux build of Moltis
@@ -44,17 +58,19 @@ chmod +x "$PREFIX/bin/moltis"
 rm -f "$PREFIX/tmp/moltis-termux.tar.gz"
 
 # 3. Setup VS Code CLI (The GOAT Tunnel)
-if [ ! -f "$PREFIX/bin/code" ]; then
-    echo "Installing VS Code CLI (Standalone)..."
-    curl -sL "https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-arm64" -o "$PREFIX/tmp/vscode_cli.tar.gz"
-    tar -xzf "$PREFIX/tmp/vscode_cli.tar.gz" -C "$PREFIX/bin"
-    rm "$PREFIX/tmp/vscode_cli.tar.gz"
-fi
+echo "Installing VS Code CLI..."
+curl -sL "https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-arm64" -o "$PREFIX/tmp/vscode_cli.tar.gz"
+tar -xzf "$PREFIX/tmp/vscode_cli.tar.gz" -C "$PREFIX/bin"
+rm "$PREFIX/tmp/vscode_cli.tar.gz"
+
+# PATCH THE VSCODE BINARY TO USE ANDROID LINKER
+echo "Patching VS Code binary for Android compatibility..."
+patchelf --set-interpreter /system/bin/linker64 "$PREFIX/bin/code"
 
 # Helper: The Ultimate Maintenance Tool
 cat <<EOF > "$PREFIX/bin/moltis-fix-vscode"
 #!/usr/bin/env bash
-# 1. Fix SSH Server Binaries (PIE Bypass)
+# Fix SSH Server Binaries
 BIN_DIR=\$HOME/.vscode-server/bin
 if [ -d "\$BIN_DIR" ]; then
     for dir in "\$BIN_DIR"/*; do
@@ -64,53 +80,42 @@ if [ -d "\$BIN_DIR" ]; then
         fi
     done
 fi
-# 2. Fix Local CLI (If needed)
+# Re-patch local code binary if it was updated
 if [ -f "\$PREFIX/bin/code" ]; then
-    chmod +x "\$PREFIX/bin/code"
+    patchelf --set-interpreter /system/bin/linker64 "\$PREFIX/bin/code" 2>/dev/null || true
 fi
 EOF
 chmod +x "$PREFIX/bin/moltis-fix-vscode"
 
-# Helper: The GOD Command
+# Helper: All-In-One Up
 cat <<EOF > "$PREFIX/bin/moltis-up"
 #!/usr/bin/env bash
 sshd
 termux-wake-lock
 moltis-fix-vscode > /dev/null 2>&1
-
-echo -e "${CYAN}-------------------------------------------------------${NC}"
-echo -e "${GREEN}Moltis Gateway is starting...${NC}"
-echo -e "${GREEN}SSH Fallback:${NC} Online (Port 8022)"
-
-# Start Tunnel in the background (Silent)
-# It will use previous login. If first time, user should run 'code tunnel'
 nohup code tunnel > /dev/null 2>&1 &
-echo -e "${GREEN}VS Code Tunnel:${NC} Online (Check Remote Explorer on PC)"
-echo -e "${CYAN}-------------------------------------------------------${NC}"
-echo ""
+echo -e "${GREEN}Moltis Gateway starting...${NC}"
+echo -e "Tunnel running in background."
 moltis
 EOF
 chmod +x "$PREFIX/bin/moltis-up"
 
-# Helper: The Tunnel Initializer (Only for first-time login)
+# Helper: Tunnel Starter
 cat <<EOF > "$PREFIX/bin/moltis-tunnel"
 #!/usr/bin/env bash
-echo -e "${CYAN}First-time Tunnel Setup...${NC}"
+echo -e "${CYAN}Starting VS Code Tunnel...${NC}"
 code tunnel
 EOF
 chmod +x "$PREFIX/bin/moltis-tunnel"
 
-# Helper: The Global Update
+# Helper: Update
 cat <<EOF > "$PREFIX/bin/moltis-update"
 #!/usr/bin/env bash
 curl -fsSL https://raw.githubusercontent.com/Muxd21/moltis-termux/main/install.sh | bash
 EOF
 chmod +x "$PREFIX/bin/moltis-update"
 
-echo -e "\n${GREEN}Setup Complete!${NC}"
+echo -e "\n${GREEN}Setup Updated!${NC}"
 echo "--------------------------------------------------------"
-echo -e "THE ONLY TWO COMMANDS YOU NEED:"
-echo -e "  1. ${NC}moltis-up${NC}      (Starts EVERYTHING)"
-echo -e "  2. ${NC}moltis-update${NC}  (Updates EVERYTHING)"
+echo -e "Try running: ${GREEN}moltis-tunnel${NC}"
 echo "--------------------------------------------------------"
-echo -e "${CYAN}Note: First time only, run 'moltis-tunnel' to authorize VS Code.${NC}"
