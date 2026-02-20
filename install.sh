@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Moltis Installer for Android (Termux) - FINAL GHOST SHIM VERSION
+# Moltis Installer for Android (Termux) - PROOT-LIGHT VERSION
 
 set -euo pipefail
 
@@ -9,21 +9,27 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 echo -e "${CYAN}-------------------------------------------------------${NC}"
-echo -e "${GREEN}Moltis on Android: The Final Frontier Fix${NC}"
+echo -e "${GREEN}Moltis on Android: Enabling Proot-Light Shims${NC}"
 echo -e "${CYAN}-------------------------------------------------------${NC}"
 
-# Install core dependencies
+# Install core dependencies (Added proot)
 pkg update -y
-pkg install -y curl wget tar openssl binutils termux-api coreutils nodejs libc++ || true
+pkg install -y curl wget tar openssl binutils termux-api coreutils nodejs proot || true
 
-# 1. Setup Environment Shims
-echo "Creating GHOST shims..."
-# Dummy ldconfig (VS Code checks for this)
-if [ ! -f "$PREFIX/bin/ldconfig" ]; then
-    echo '#!/usr/bin/env bash' > "$PREFIX/bin/ldconfig"
-    echo 'exit 0' >> "$PREFIX/bin/ldconfig"
-    chmod +x "$PREFIX/bin/ldconfig"
-fi
+# 1. Setup Virtual File System (The "Fake Root")
+echo "Building Virtual File System..."
+VROOT="$HOME/.moltis-vroot"
+mkdir -p "$VROOT/lib"
+mkdir -p "$VROOT/usr/bin"
+
+# Link the Android Linker to the Musl path VS Code expects
+ln -sf /system/bin/linker64 "$VROOT/lib/ld-musl-aarch64.so.1"
+# Link local C++ libraries to the standard names
+ln -sf "$PREFIX/lib/libc++.so" "$VROOT/lib/libstdc++.so.6"
+# Create a dummy ldconfig
+echo '#!/usr/bin/env bash' > "$VROOT/usr/bin/ldconfig"
+echo 'exit 0' >> "$VROOT/usr/bin/ldconfig"
+chmod +x "$VROOT/usr/bin/ldconfig"
 
 # 2. Grab the latest Termux build of Moltis
 echo "Fetching latest Moltis Termux build..."
@@ -50,10 +56,7 @@ curl -sL "https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-
 tar -xzf "$PREFIX/tmp/vscode_cli.tar.gz" -C "$PREFIX/bin"
 rm "$PREFIX/tmp/vscode_cli.tar.gz"
 
-# Create Moltis Helpers
-echo -e "${GREEN}Updating helper commands...${NC}"
-
-# Helper: The SSH Patcher (unchanged)
+# Helper: The SSH Patcher
 cat <<EOF > "$PREFIX/bin/moltis-fix-vscode"
 #!/usr/bin/env bash
 BIN_DIR=\$HOME/.vscode-server/bin
@@ -74,21 +77,22 @@ cat <<EOF > "$PREFIX/bin/moltis-up"
 sshd
 termux-wake-lock
 moltis-fix-vscode > /dev/null 2>&1
-# Start tunnel silently with the prerequisite-skip flag
-DONT_PROMPT_WSL_INSTALL=true VSCODE_SKIP_PREREQUISITES=1 nohup code tunnel > /dev/null 2>&1 &
+
+# Launch Tunnel with Proot-Light Mapping
+VROOT="\$HOME/.moltis-vroot"
+nohup proot -b "\$VROOT/lib:/lib" -b "\$VROOT/usr/bin/ldconfig:/usr/bin/ldconfig" code tunnel > /dev/null 2>&1 &
+
 echo -e "${GREEN}Moltis Gateway starting...${NC}"
 moltis
 EOF
 chmod +x "$PREFIX/bin/moltis-up"
 
-# Helper: Tunnel Starter with Environment Overrides
-# This uses the hidden flags that VS Code devs use to bypass checks
+# Helper: Tunnel Starter (The authorized way)
 cat <<EOF > "$PREFIX/bin/moltis-tunnel"
 #!/usr/bin/env bash
-echo -e "${CYAN}Starting VS Code Tunnel (Prerequisite Bypass Mode)...${NC}"
-export VSCODE_SKIP_PREREQUISITES=1
-export DONT_PROMPT_WSL_INSTALL=true
-code tunnel
+VROOT="\$HOME/.moltis-vroot"
+echo -e "${CYAN}Starting VS Code Tunnel with Virtual Mapping...${NC}"
+proot -b "\$VROOT/lib:/lib" -b "\$VROOT/usr/bin/ldconfig:/usr/bin/ldconfig" code tunnel
 EOF
 chmod +x "$PREFIX/bin/moltis-tunnel"
 
@@ -99,7 +103,7 @@ curl -fsSL https://raw.githubusercontent.com/Muxd21/moltis-termux/main/install.s
 EOF
 chmod +x "$PREFIX/bin/moltis-update"
 
-echo -e "\n${GREEN}Setup Updated!${NC}"
+echo -e "\n${GREEN}Setup Updated with Proot-Light!${NC}"
 echo "--------------------------------------------------------"
-echo -e "Try: ${GREEN}moltis-tunnel${NC}"
+echo -e "Run: ${GREEN}moltis-tunnel${NC}"
 echo "--------------------------------------------------------"
