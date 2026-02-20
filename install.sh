@@ -7,11 +7,11 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-echo -e "${GREEN}Preparing Moltis for Termux...${NC}"
+echo -e "${GREEN}Preparing Moltis + VS Code environment for Termux...${NC}"
 
-# Install deps
+# Install core dependencies and VS Code remote-ssh headers
 pkg update -y
-pkg install -y curl tar openssl binutils termux-api
+pkg install -y curl wget tar openssl binutils termux-api
 
 # Grab the latest termux release from GitHub API
 echo "Fetching latest Moltis Termux build..."
@@ -20,31 +20,35 @@ DOWNLOAD_URL=$(echo "$LATEST_RELEASE" | grep -o '"browser_download_url": "[^"]*m
 
 if [ -z "$DOWNLOAD_URL" ]; then
     echo -e "${RED}Failed to find release executable from Muxd21/moltis-termux${NC}"
-    echo "This means the GitHub Actions workflow hasn't finished building the release yet!"
     exit 1
 fi
 
-echo -e "Downloading binary from GitHub Releases:\n$DOWNLOAD_URL"
+echo -e "Downloading binary..."
+rm -f "$HOME/.local/bin/moltis" # Cleanup old paths
 curl -sL "$DOWNLOAD_URL" -o "$PREFIX/tmp/moltis-termux.tar.gz"
 
 echo "Extracting binary..."
-# Cleanup common legacy paths to prevent "file not found" errors
-rm -f "$HOME/.local/bin/moltis"
-
 tar -xzf "$PREFIX/tmp/moltis-termux.tar.gz" -C "$PREFIX/tmp"
 mv "$PREFIX/tmp/moltis" "$PREFIX/bin/moltis"
 chmod +x "$PREFIX/bin/moltis"
 rm -f "$PREFIX/tmp/moltis-termux.tar.gz"
 
+# Apply VS Code Remote-SSH Fix for Termux
+echo "Injecting VS Code Remote compatibility..."
+if [ ! -f "$PREFIX/bin/ldd" ]; then
+    ln -s "$PREFIX/bin/pkg-config" "$PREFIX/bin/ldd" || true
+fi
+
 # Create Moltis Helpers
-echo -e "${GREEN}Creating helper commands...${NC}"
+echo -e "${GREEN}Updating helper commands...${NC}"
 
 # 1. moltis-up
 cat <<EOF > "$PREFIX/bin/moltis-up"
 #!/usr/bin/env bash
 sshd
 termux-wake-lock
-echo "Starting Moltis Gateway..."
+echo "Moltis & SSH Server are running!"
+echo "You can now connect via VS Code at port 8022."
 moltis
 EOF
 chmod +x "$PREFIX/bin/moltis-up"
@@ -56,10 +60,7 @@ curl -fsSL https://raw.githubusercontent.com/Muxd21/moltis-termux/main/install.s
 EOF
 chmod +x "$PREFIX/bin/moltis-update"
 
-echo -e "\n${GREEN}Moltis successfully installed to $PREFIX/bin/moltis${NC}"
+echo -e "\n${GREEN}Setup Complete!${NC}"
 echo "-------------------------------------------------------"
-echo -e "${GREEN}New commands available:${NC}"
-echo -e "  ${NC}moltis-up${NC}      - Starts SSH, locks CPU, and launches Moltis"
-echo -e "  ${NC}moltis-update${NC}  - Checks for and installs the latest Termux build"
+echo "Run 'moltis-up' then try connecting your VS Code again."
 echo "-------------------------------------------------------"
-echo "Run 'moltis-up' to get started!"
