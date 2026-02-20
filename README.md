@@ -4,9 +4,9 @@
 
 ![Termux](https://img.shields.io/badge/Termux-Required-orange)
 ![No proot](https://img.shields.io/badge/No%20Proot-Required-blue)
-![Architecture](https://img.shields.io/badge/Arch-aarch64--musl-green)
+![VS Code](https://img.shields.io/badge/VS%20Code-Tunnel%20(GOAT)-cyan)
 
-A high-performance AI gateway running natively on your spare phone. No bloated Linux distributions, no overhead—just raw Rust power.
+The most refined AI gateway setup for Android. No Proot, No Ubuntu overhead—just high-performance static binaries and a cloud-proxied development tunnel.
 
 ## 🚀 One-Command Install
 
@@ -16,75 +16,48 @@ Paste this into Termux (installed from F-Droid):
 curl -fsSL https://raw.githubusercontent.com/Muxd21/moltis-termux/main/install.sh | bash
 ```
 
-## ⚡ The "All-In-One" Startup
-
-Once installed, you only need one command to run everything:
-
+## ⚡ Step 1: Start the Gateway
 ```bash
 moltis-up
 ```
+Starts the Moltis AI server and prepares the environment.
 
-**What it does:**
-1. **SSHD**: Starts the SSH server for PC connection.
-2. **Wake Lock**: Prevents Android from killing the process when the screen is off.
-3. **VS Code Patch**: Automatically repairs the VS Code Remote-SSH server for Termux compatibility.
-4. **Gateway**: Launches the Moltis AI Gateway.
+## 🍰 Step 2: The GOAT Tunnel (VS Code)
+Forget complex SSH configurations. This repository installs the native **VS Code CLI (Musl)** for direct tunneling. 
 
-## 💻 Seamless VS Code + Tailscale
-
-If you use Tailscale (highly recommended), you can edit your phone's files from your PC using VS Code as if it were a local machine.
-
-### 1. Configure SSH on your PC
-Add this to your `~/.ssh/config` file:
-
-```ssh
-Host phone
-    HostName 100.x.x.x  # Your Tailscale IP
-    Port 8022
-    User termux
-    StrictHostKeyChecking no
-    UserKnownHostsFile /dev/null
+**On your phone (new tab), run:**
+```bash
+moltis-tunnel
 ```
-
-### 2. Connect
-In VS Code: `F1` -> `Remote-SSH: Connect to Host...` -> `phone`.
+1. Follow the link to log in with GitHub/Microsoft.
+2. Open your PC's VS Code, install the **"Remote - Tunnels"** extension.
+3. Your phone will appear in the "Remote Explorer" tab. **Click and you are in.**
 
 ## 🛠️ Helper Commands
 
 | Command | Action |
 | --- | --- |
-| `moltis-up` | Starts SSH, prevents sleep, patches VS Code, and starts Gateway. |
+| `moltis-tunnel` | **Best Method**: Starts a secure cloud tunnel for VS Code. |
+| `moltis-up` | Starts the gateway and locks CPU to prevent sleep. |
 | `moltis-update` | Pulls the latest static build from GitHub Actions. |
-| `moltis-fix-vscode` | Manually repairs VS Code Server if a new version breaks it. |
-| `moltis onboard` | Runs the initial setup/auth wizard. |
+| `moltis-fix-vscode` | repairs VS Code if using the old Fallback SSH method. |
 
 ## 🧠 Why this version?
 
-Standard Linux binaries don't run on Android because of library differences (Glibc vs Bionic).
+Instead of running a heavy Ubuntu distribution (1.5GB+), we use **GitHub Actions** to cross-compile Moltis into a **Static Musl Binary**.
+* **Truly Native**: No emulation layer (proot). Uses ~20MB of storage.
+* **Always Updated**: Our CI/CD checks for new versions every 24 hours.
+* **PC-Grade Dev Experience**: The Tunnel method gives you full VS Code performance on your phone's files without the lag of a VNC or SSH bridge.
 
-This repository uses **GitHub Actions** to automatically cross-compile the official Moltis source code into a **Truly Static Musl Binary**. 
-* **Native Speed**: No emulation layer (like proot).
-* **Zero Bloat**: Takes up ~20MB instead of 1.5GB for a Linux distro.
-* **Auto-Sync**: Checks every 24 hours for new Moltis versions and builds them automatically.
-
-## Uninstall
-
-```bash
-rm $PREFIX/bin/moltis*
-rm -rf ~/.moltis
-```
+---
 
 ## Troubleshooting
 
-### VS Code "Exit Code 207" or "Node not found"
-VS Code Remote-SSH often fails on the first connection because it expects a standard Linux environment.
-
-1.  Connect from your PC and let it **fail**.
-2.  On your phone, run: `moltis-fix-vscode`.
-3.  Click **Retry** in VS Code. It will now work.
+### VS Code Tunnel Login
+If the link doesn't open, copy the 8-digit code and go to `github.com/login/device` on your computer.
 
 ### Permission Denied
-If you get a permission error when running `moltis`, you are likely using the outdated Play Store version of Termux. **Uninstall it and install the version from F-Droid.**
+Ensure you are using the **F-Droid version of Termux**. The Play Store version is legacy and blocks binary execution on Android 10+.
 
 ## License
 MIT
