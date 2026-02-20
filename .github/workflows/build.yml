@@ -25,7 +25,7 @@ jobs:
         uses: taiki-e/install-action@cross
 
       - name: Build generic aarch64-linux-android
-        run: cross build --release --target aarch64-linux-android --no-default-features --features "file-watcher, jemalloc, metrics, prometheus, push-notifications, qmd, tailscale, tls, voice, web-ui"
+        run: cross build --release --target aarch64-linux-android --no-default-features --features "file-watcher, metrics, prometheus, push-notifications, qmd, tailscale, tls, voice, web-ui"
 
       - name: Package binary
         run: |
