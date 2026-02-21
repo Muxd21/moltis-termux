@@ -61,10 +61,14 @@ jobs:
 
       - name: Build Networking Tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu musl-tools
-          
           mkdir -p bin_tools
+          
+          # ── Setup musl-cross toolchain ────────────────────────
+          echo "Setting up aarch64-linux-musl-cross..."
+          curl -fsSL https://musl.cc/aarch64-linux-musl-cross.tgz -o musl-cross.tgz
+          tar -xzf musl-cross.tgz
+          export PATH=$PWD/aarch64-linux-musl-cross/bin:$PATH
+          CROSS_CC=aarch64-linux-musl-gcc
           
           # ── Build entr ─────────────────────────────────────────
           echo "Building entr..."
@@ -72,7 +76,7 @@ jobs:
           tar -xzf entr.tar.gz
           cd entr-5.7
           ./configure
-          make CC=aarch64-linux-gnu-gcc LDFLAGS="-static"
+          make CC=$CROSS_CC LDFLAGS="-static"
           cp entr ../bin_tools/
           cd ..
           
@@ -81,7 +85,7 @@ jobs:
           curl -fsSL http://www.dest-unreach.org/socat/download/socat-1.8.0.2.tar.gz -o socat.tar.gz
           tar -xzf socat.tar.gz
           cd socat-1.8.0.2
-          CC=aarch64-linux-gnu-gcc ./configure --host=aarch64-linux-gnu LDFLAGS="-static"
+          CC=$CROSS_CC ./configure --host=aarch64-linux-musl LDFLAGS="-static"
           make -j$(nproc)
           cp socat ../bin_tools/
           cd ..
@@ -91,7 +95,8 @@ jobs:
           curl -fsSL https://github.com/yrutschle/sslh/archive/refs/tags/v1.22c.tar.gz -o sslh.tar.gz
           tar -xzf sslh.tar.gz
           cd sslh-1.22c
-          make CC=aarch64-linux-gnu-gcc USELIBCONFIG= USELIBWRAP= LDFLAGS="-static" sslh-fork
+          # Disable optional libs to ensure pure static build
+          make CC=$CROSS_CC USELIBCONFIG= USELIBWRAP= USELIBPCRE= LDFLAGS="-static" sslh-fork
           cp sslh-fork ../bin_tools/sslh
           cd ..
 
