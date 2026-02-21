@@ -16,10 +16,15 @@ echo -e "${CYAN}-------------------------------------------------------${NC}"
 pkg update -y
 pkg install -y curl wget tar openssl binutils termux-api coreutils nodejs which || true
 
-# 1. Setup Environment Shims (Critical for VS Code Remote-SSH)
 if [ ! -f "$PREFIX/bin/ldd" ]; then
-    echo '#!/usr/bin/env bash' > "$PREFIX/bin/ldd"
-    echo 'echo "libc.so.6 => /system/lib64/libc.so (0x0000000000000000)"' >> "$PREFIX/bin/ldd"
+    cat <<'EOF' > "$PREFIX/bin/ldd"
+#!/usr/bin/env bash
+if [[ "$1" == "--version" ]]; then
+    echo "ldd (unknown) 2.28"
+    exit 0
+fi
+echo "libc.so.6 => /system/lib64/libc.so (0x0000000000000000)"
+EOF
     chmod +x "$PREFIX/bin/ldd"
 fi
 
