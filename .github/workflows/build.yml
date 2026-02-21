@@ -102,9 +102,11 @@ jobs:
           sed -i 's/USELIBPCRE=.*/USELIBPCRE=/' Makefile
           sed -i 's/USELIBCONFIG=.*/USELIBCONFIG=/' Makefile
           sed -i 's/USELIBWRAP=.*/USELIBWRAP=/' Makefile
+          sed -i 's/USELIBCAP=.*/USELIBCAP=/' Makefile
           # Remove any already-defined flags just in case
           sed -i 's/-DLIBPCRE//g' Makefile
           sed -i 's/-lpcre2-8//g' Makefile
+          sed -i 's/-DENABLE_REGEX//g' Makefile
           
           echo "Starting sslh-fork compilation..."
           make CC="zig cc -target $ZIG_TARGET" LDFLAGS="-static" sslh-fork
