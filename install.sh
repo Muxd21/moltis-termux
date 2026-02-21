@@ -76,7 +76,7 @@ export SSL_CERT_FILE="\$PREFIX/etc/tls/cert.pem"
 termux-wake-lock
 moltis-fix-vscode > /dev/null 2>&1
 
-IP=\$(ifconfig tun0 2>/dev/null | grep 'inet ' | awk '{print \$2}' || ifconfig wlan0 2>/dev/null | grep 'inet ' | awk '{print \$2}')
+IP=\$(ip addr show tailscale0 2>/dev/null | grep 'inet ' | awk '{print \$2}' | cut -d/ -f1 || ifconfig tun0 2>/dev/null | grep 'inet ' | awk '{print \$2}' || ifconfig wlan0 2>/dev/null | grep 'inet ' | awk '{print \$2}')
 
 echo -e "${CYAN}-------------------------------------------------------${NC}"
 echo -e "${GREEN}Moltis Simple Gateway is Online!${NC}"
@@ -101,7 +101,7 @@ moltis-fix-vscode > /dev/null 2>&1
 # We use port 4433 as a non-priv substitute if 443 fails
 sslh-fork --user \$(whoami) --listen 0.0.0.0:4433 --ssh 127.0.0.1:8022 --http 127.0.0.1:3000 --pidfile /tmp/sslh.pid 2>/dev/null || true
 
-IP=\$(ifconfig tun0 2>/dev/null | grep 'inet ' | awk '{print \$2}' || ifconfig wlan0 2>/dev/null | grep 'inet ' | awk '{print \$2}')
+IP=\$(ip addr show tailscale0 2>/dev/null | grep 'inet ' | awk '{print \$2}' | cut -d/ -f1 || ifconfig tun0 2>/dev/null | grep 'inet ' | awk '{print \$2}' || ifconfig wlan0 2>/dev/null | grep 'inet ' | awk '{print \$2}')
 
 echo -e "${CYAN}-------------------------------------------------------${NC}"
 echo -e "${GREEN}Moltis PROFESSIONAL DEV MODE Online! 🚀${NC}"
