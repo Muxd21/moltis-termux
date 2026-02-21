@@ -54,6 +54,7 @@ jobs:
       - name: Patch Termux SSL Bug
         run: |
           awk '/pub fn apply_env_overrides\(config: MoltisConfig\) -> MoltisConfig \{/ {
+            print "#[allow(unsafe_code)]"
             print
             print "    for (k, v) in &config.env {"
             print "        if std::env::var(k).is_err() {"
