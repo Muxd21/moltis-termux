@@ -65,54 +65,64 @@ jobs:
             next
           }1' crates/config/src/loader.rs > tmp.rs && mv tmp.rs crates/config/src/loader.rs
 
-          # ── Patch 2: Fix shared_http_client to load Termux CA certs ──
-          cat > /tmp/http_client_patch.rs << 'RUSTPATCH'
-          /// Shared HTTP client for LLM providers.
-          ///
-          /// All providers that don't need custom redirect/proxy settings should
-          /// reuse this client to share connection pools, DNS cache, and TLS sessions.
-          ///
-          /// On Termux/Android we:
-          /// 1. Force IPv4 to avoid broken IPv6 routing on mobile networks
-          /// 2. Explicitly load Termux CA certs since standard paths don't exist
-          pub fn shared_http_client() -> &'static reqwest::Client {
-              static CLIENT: std::sync::LazyLock<reqwest::Client> =
-                  std::sync::LazyLock::new(|| {
-                      let mut builder = reqwest::ClientBuilder::new()
-                          // Force IPv4: Android/Termux often has broken IPv6 routing
-                          // which causes 5-second TCP timeouts on Cloudflare-backed domains
-                          .local_address(std::net::IpAddr::V4(std::net::Ipv4Addr::UNSPECIFIED))
-                          .connect_timeout(std::time::Duration::from_secs(15));
+          # ── Patch 2: Overwrite shared_http_client with IPv4-forced, cert-loading version ──
+          cat > crates/agents/src/lib.rs << 'RUSTEOF'
+//! LLM agent runtime: model selection, prompt building, tool execution, streaming.
 
-                      // Try to load PEM certs from SSL_CERT_FILE or common Termux path.
-                      let cert_path = std::env::var("SSL_CERT_FILE")
-                          .ok()
-                          .unwrap_or_else(|| "/data/data/com.termux/files/usr/etc/tls/cert.pem".into());
+// FFI wrappers for llama-cpp-2 require unsafe Send/Sync impls when local-llm feature is enabled.
+#![cfg_attr(feature = "local-llm", allow(unsafe_code))]
 
-                      if let Ok(pem_data) = std::fs::read(&cert_path) {
-                          for cert_result in reqwest::tls::Certificate::from_pem_bundle(&pem_data) {
-                              builder = builder.add_root_certificate(cert_result);
-                          }
-                      }
+pub mod auth_profiles;
 
-                      builder.build().unwrap_or_else(|_| reqwest::Client::new())
-                  });
-              &CLIENT
-          }
-          RUSTPATCH
+/// Shared HTTP client for LLM providers.
+///
+/// All providers that don't need custom redirect/proxy settings should
+/// reuse this client to share connection pools, DNS cache, and TLS sessions.
+///
+/// On Termux/Android we:
+/// 1. Force IPv4 to avoid broken IPv6 routing on mobile networks
+/// 2. Explicitly load Termux CA certs since standard paths don't exist
+pub fn shared_http_client() -> &'static reqwest::Client {
+    static CLIENT: std::sync::LazyLock<reqwest::Client> =
+        std::sync::LazyLock::new(|| {
+            let mut builder = reqwest::ClientBuilder::new()
+                // Force IPv4: Android/Termux often has broken IPv6 routing
+                // which causes 5-second TCP timeouts on Cloudflare-backed domains
+                .local_address(std::net::IpAddr::V4(std::net::Ipv4Addr::UNSPECIFIED))
+                .connect_timeout(std::time::Duration::from_secs(15));
 
-          # Use Python to do a reliable multi-line replacement
-          python3 << 'PYEOF'
-          import re, pathlib
-          p = pathlib.Path("crates/agents/src/lib.rs")
-          src = p.read_text()
-          # Match the entire shared_http_client function
-          pattern = r'(?s)/// Shared HTTP client.*?pub fn shared_http_client\(\)[^}]*\{[^}]*\{[^}]*\}[^}]*\}'
-          replacement = open("/tmp/http_client_patch.rs").read().strip()
-          new_src = re.sub(pattern, replacement, src)
-          p.write_text(new_src)
-          print("Patched shared_http_client in lib.rs")
-          PYEOF
+            // Try to load PEM certs from SSL_CERT_FILE or common Termux path.
+            let cert_path = std::env::var("SSL_CERT_FILE")
+                .ok()
+                .unwrap_or_else(|| "/data/data/com.termux/files/usr/etc/tls/cert.pem".into());
+
+            if let Ok(pem_data) = std::fs::read(&cert_path) {
+                for cert_result in reqwest::tls::Certificate::from_pem_bundle(&pem_data) {
+                    builder = builder.add_root_certificate(cert_result);
+                }
+            }
+
+            builder.build().unwrap_or_else(|_| reqwest::Client::new())
+        });
+    &CLIENT
+}
+pub mod memory_writer;
+pub mod model;
+pub mod multimodal;
+pub mod prompt;
+pub mod providers;
+pub mod runner;
+pub use {
+    model::{ChatMessage, ContentPart, UserContent},
+    runner::AgentRunError,
+};
+pub mod provider_chain;
+pub mod silent_turn;
+pub mod skills;
+pub mod tool_registry;
+RUSTEOF
+          echo "Patched lib.rs with IPv4-forced shared_http_client"
+          cat crates/agents/src/lib.rs | head -20
 
       - name: Install cross
         uses: taiki-e/install-action@cross
