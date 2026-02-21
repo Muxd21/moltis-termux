@@ -13,14 +13,14 @@
     <style>
         :root {
             --bg: #0a0b10;
-            --surface: #161a23;
-            --accent: #00f2ff;
-            --accent-glow: rgba(0, 242, 255, 0.3);
-            --text: #e0e6ed;
-            --text-dim: #94a3b8;
-            --glass: rgba(22, 26, 35, 0.7);
-            --border: rgba(255, 255, 255, 0.1);
-            --success: #10b981;
+            --surface: #1a1614;
+            --accent: #ff8c00;
+            --accent-glow: rgba(255, 140, 0, 0.3);
+            --text: #fdf8f5;
+            --text-dim: #a8a29e;
+            --glass: rgba(26, 22, 20, 0.7);
+            --border: rgba(255, 140, 0, 0.1);
+            --success: #f59e0b;
         }
 
         * {
@@ -44,8 +44,8 @@
             width: 100%;
             height: 100%;
             background:
-                radial-gradient(circle at 20% 20%, rgba(0, 242, 255, 0.05) 0%, transparent 40%),
-                radial-gradient(circle at 80% 80%, rgba(147, 51, 234, 0.05) 0%, transparent 40%);
+                radial-gradient(circle at 20% 20%, rgba(255, 140, 0, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
             z-index: -1;
         }
 
@@ -286,9 +286,9 @@
 
     <header>
         <img src="images/moltis-logo.svg" alt="Moltis Logo" class="moltis-logo">
-        <h1>Moltis Android</h1>
-        <p class="subtitle">The definitive technical guide to running a native Rust AI Gateway on Termux with zero
-            overhead.</p>
+        <h1>Moltis VPS</h1>
+        <p class="subtitle">The definitive technical guide to running a native Private AI VPS on Android with Zero Proot
+            and native performance.</p>
         <a href="#content" class="scroll-indicator">↓</a>
     </header>
 
@@ -336,21 +336,26 @@
         </section>
 
         <section>
-            <h2>The "Goated" Tunnel</h2>
+            <h2>Private VPS Mode</h2>
             <div class="card">
-                <p>Development on a phone usually means struggling with SSH keys, port forwarding, and unstable
-                    connections. We implemented the <span class="highlight">VS Code Remote Tunnel</span> (Goat Edition).
-                </p>
-                <p>Instead of standard SSH, we use the <strong>Native VS Code CLI (Alpine/Musl)</strong> directly inside
-                    Termux. This creates an encrypted bridge that lets you connect your PC browser or VS Code desktop to
-                    your phone with one click.</p>
-                <ul>
-                    <li>No SSH Password prompts.</li>
-                    <li>No Port Forwarding required.</li>
-                    <li>Full VS Code Desktop performance.</li>
-                </ul>
-                <div class="tech-item" style="margin-top: 1rem; border: 1px dashed var(--accent);">
-                    <code>moltis-tunnel</code> - Command to start the secure bridge.
+                <p>Instead of relying on public tunnels or unstable local IPs, we pivoted to a <span
+                        class="highlight">Private VPS Architecture</span> powered by Tailscale.</p>
+                <p>By treating your phone as a node in your private mesh network, you get a stable IP that works
+                    anywhere in the world, secured by your own identity. No public ports exposed, no risk of DDoS.</p>
+
+                <div class="tech-grid">
+                    <div class="tech-item">
+                        <h3>Tailscale Mesh</h3>
+                        <p>End-to-end encrypted connection between your PC and Phone.</p>
+                    </div>
+                    <div class="tech-item">
+                        <h3>Native SSH (8022)</h3>
+                        <p>High-speed local SSH optimized for Android Termux.</p>
+                    </div>
+                    <div class="tech-item">
+                        <h3>VS Code Auth</h3>
+                        <p>Full support for Cursor (Antigravity) and VS Code Remote-SSH.</p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -382,8 +387,8 @@
                     </div>
                     <div class="tech-item">
                         <h3>moltis-fix-vscode</h3>
-                        <p>The "Node Swapper". Automatically repairs VS Code environment for Android-exclusive PIE
-                            security.</p>
+                        <p>The "Universal Healer". Automatically patches Cursor (Antigravity) and VS Code environments
+                            for Android security compatibility.</p>
                     </div>
                     <div class="tech-item">
                         <h3>moltis-update</h3>
