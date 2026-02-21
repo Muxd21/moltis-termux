@@ -67,15 +67,39 @@ moltis-tunnel
 | `socat` | **Plumbing**: Bridges sockets and ports across Tailscale. |
 | `sslh` | **Stealth**: Multiplexes SSH/HTTP on port 443 (Firewall bypass). |
 
-## 🧠 Why Native?
-Most Android "Linux" setups use **Proot/Ubuntu** which wastes 2GB of space and adds lag. This repository uses **Static Musl Binaries** built via GitHub Actions for raw, native speed.
+## 🚀 Professional Suite Quickstart
 
-### Professional VPS Tools
-We bundle four critical tools that define a professional VPS experience:
-*   **Mosh**: Keeps your session alive when switching between WiFi and Cellular.
-*   **Entr**: Enables native hot-reloading for code edits over SSH.
-*   **Socat**: The "Swiss-army knife" for networking and socket debugging.
-*   **Sslh**: Lets you access your phone via port 443 even on restricted networks.
+### 1. Resilient Sessions (Mosh)
+Forget SSH timeouts. Mosh handles IP roaming (WiFi to 5G) without dropping your session.
+```bash
+# Connect from your PC
+mosh --ssh="ssh -p 8022" termux@<YOUR_PHONE_IP>
+```
+
+### 2. Auto-Reloading (Entr)
+Develop on your phone like a pro. Run a command whenever files change.
+```bash
+# Watch logs and tail them automatically
+ls ~/.moltis/*.log | entr tail -f
+```
+
+### 3. Networking Plumbing (Socat)
+Bridge ports or sockets across your network.
+```bash
+# Forward local 3000 to Tailscale 8080
+socat TCP4-LISTEN:8080,fork,reuseaddr TCP4:127.0.0.1:3000
+```
+
+### 4. Stealth Access (SSLH)
+Stay connected even on hotel or office networks that block SSH.
+```bash
+# Access SSH via HTTPS port (443)
+ssh -p 443 termux@<YOUR_PHONE_IP>
+```
+
+## 🧠 Why Native?
+Most Android "Linux" setups use **Proot/Ubuntu** which wastes 2GB of space and adds lag. This repository uses **Static Musl Binaries** built via Zig for raw, native speed.
+
 
 ## Uninstall
 ```bash
