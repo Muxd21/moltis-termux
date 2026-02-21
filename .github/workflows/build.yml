@@ -72,13 +72,17 @@ jobs:
           /// All providers that don't need custom redirect/proxy settings should
           /// reuse this client to share connection pools, DNS cache, and TLS sessions.
           ///
-          /// On Termux/Android the standard certificate paths do not exist, so we
-          /// explicitly load root certificates from `SSL_CERT_FILE` (or the well-known
-          /// Termux path) into the `reqwest::ClientBuilder`.
+          /// On Termux/Android we:
+          /// 1. Force IPv4 to avoid broken IPv6 routing on mobile networks
+          /// 2. Explicitly load Termux CA certs since standard paths don't exist
           pub fn shared_http_client() -> &'static reqwest::Client {
               static CLIENT: std::sync::LazyLock<reqwest::Client> =
                   std::sync::LazyLock::new(|| {
-                      let mut builder = reqwest::ClientBuilder::new();
+                      let mut builder = reqwest::ClientBuilder::new()
+                          // Force IPv4: Android/Termux often has broken IPv6 routing
+                          // which causes 5-second TCP timeouts on Cloudflare-backed domains
+                          .local_address(std::net::IpAddr::V4(std::net::Ipv4Addr::UNSPECIFIED))
+                          .connect_timeout(std::time::Duration::from_secs(15));
 
                       // Try to load PEM certs from SSL_CERT_FILE or common Termux path.
                       let cert_path = std::env::var("SSL_CERT_FILE")
