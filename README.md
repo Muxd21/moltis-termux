@@ -1,54 +1,73 @@
-# Moltis on Android (Native Termux)
+# Moltis Android VPS (Private & Secure)
 
 <img src="docs/images/moltis-logo.svg" width="120" alt="moltis on Android">
 
 ![Termux](https://img.shields.io/badge/Termux-Required-orange)
-![No proot](https://img.shields.io/badge/No%20Proot-Required-blue)
-![Tunnels](https://img.shields.io/badge/Tunnel-Cloudflare%20(Open)-f38020)
+![Tailscale](https://img.shields.io/badge/Security-Tailscale-blue)
+![Architecture](https://img.shields.io/badge/Target-Native--aarch64-green)
 
-A professional AI workstation on your phone. Native performance, account-free remote access.
+Turn your phone into a professional, private AI VPS. This setup runs natively on Android with zero emulation overhead, secured behind your Tailscale firewall.
 
 ## 🚀 One-Command Install
 
-Paste this into Termux:
+Paste this into Termux (F-Droid version):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Muxd21/moltis-termux/main/install.sh | bash
 ```
 
-## ⚡ The Open Workflow (Account-Free)
+## 🔒 The Private VPS Workflow (Tailscale)
 
-### 1. `moltis-up`
-Starts the **Moltis AI Gateway** locally on your phone.
+This is the most secure way to work. Your phone is never exposed to the public internet.
 
-### 2. `moltis-tunnel` (Web Dashboard)
-Instantly generates a public HTTPS URL (via Cloudflare) so you can access your Moltis dashboard from any browser in the world. **No login required.**
+### 1. Start the VPS
+Run this on your phone:
+```bash
+moltis-up
+```
 
-### 3. `moltis-ssh-tunnel` (VS Code Desktop)
-If you use **VSCodium**, **Cursor**, or **PearAI**, use this to expose your phone's SSH port. It provides a secure bridge for your PC's VS Code to connect to your phone's files.
+### 2. Configure your PC
+Add this to your PC's SSH config (`~/.ssh/config`):
+
+```ssh
+Host moltis
+    HostName 100.x.x.x  # Your Phone's Tailscale IP
+    Port 8022
+    User termux
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+```
+
+### 3. Connect (VS Code / SSH)
+*   **Terminal**: Just run `ssh moltis`.
+*   **VS Code**: `F1` -> `Remote-SSH: Connect to Host...` -> `moltis`.
+*   **Dashboard**: Open `http://100.x.x.x:3000` in your PC browser.
 
 ---
 
-## 🛠️ Helper Commands
+## 🌍 Fallback: Public Tunnel (Cloudflare)
+If you are on a machine without Tailscale, you can generate a temporary public URL:
+```bash
+moltis-tunnel
+```
+*Gives you a temporary `https://...trycloudflare.com` address.*
 
-| Command | Action |
+---
+
+## 🛠️ Toolset
+
+| Command | Purpose |
 | --- | --- |
-| `moltis-up` | Starts the gateway and locks CPU to prevent sleep. |
-| `moltis-tunnel` | Generates an anonymous HTTPS URL for the Web UI. |
-| `moltis-ssh-tunnel` | Generates a TCP tunnel for VS Code Desktop / SSH. |
-| `moltis-update` | Pulls the latest static build and cloudflare agent. |
+| `moltis-up` | Starts AI, SSH Server, and Lock-Screen safety. |
+| `moltis-update` | Pulls the latest native builds and script fixes. |
+| `moltis-fix-vscode` | **Healer**: Automatically fixes VS Code Server for Android. |
 
-## 🧠 Why this version?
-
-Unlike official Microsoft Tunnels, this version is **Truly Open**.
-* **No Accounts**: No GitHub or Microsoft login required.
-* **Open Source**: Uses the `cloudflared` engine, compatible with all VS Code forks.
-* **Privacy**: Your data flows through Cloudflare's edge network directly to your device.
+## 🧠 Why Native?
+Most Android "Linux" setups use **Proot/Ubuntu** which wastes 2GB of space and adds lag. This repository uses **Static Musl Binaries** built via GitHub Actions for raw, native speed.
 
 ## Uninstall
 ```bash
 rm $PREFIX/bin/moltis*
-rm $PREFIX/bin/cloudflared
 rm -rf ~/.moltis
 ```
 

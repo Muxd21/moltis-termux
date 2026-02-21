@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Moltis Installer for Android (Termux) - OPENTUNNEL / CLOUDFLARE VERSION
+# Moltis Installer for Android (Termux) - PRIVATE VPS EDITION
 
 set -euo pipefail
 
@@ -9,14 +9,21 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 echo -e "${CYAN}-------------------------------------------------------${NC}"
-echo -e "${GREEN}Moltis on Android: The OpenTunnel (Cloudflare) Setup${NC}"
+echo -e "${GREEN}Moltis on Android: Private VPS Mode${NC}"
 echo -e "${CYAN}-------------------------------------------------------${NC}"
 
 # Install core dependencies
 pkg update -y
 pkg install -y curl wget tar openssl binutils termux-api coreutils nodejs || true
 
-# 1. Grab the latest Termux build of Moltis
+# 1. Setup Environment Shims (Critical for VS Code Remote-SSH)
+if [ ! -f "$PREFIX/bin/ldd" ]; then
+    echo '#!/usr/bin/env bash' > "$PREFIX/bin/ldd"
+    echo 'echo "libc.so.6 => /system/lib64/libc.so (0x0000000000000000)"' >> "$PREFIX/bin/ldd"
+    chmod +x "$PREFIX/bin/ldd"
+fi
+
+# 2. Grab the latest Termux build of Moltis
 echo "Fetching latest Moltis Termux build..."
 LATEST_RELEASE=$(curl -s "https://api.github.com/repos/Muxd21/moltis-termux/releases/latest")
 DOWNLOAD_URL=$(echo "$LATEST_RELEASE" | grep -o '"browser_download_url": "[^"]*moltis-termux-aarch64.tar.gz"' | head -n 1 | cut -d'"' -f4)
@@ -33,45 +40,55 @@ mv "$PREFIX/tmp/moltis" "$PREFIX/bin/moltis"
 chmod +x "$PREFIX/bin/moltis"
 rm -f "$PREFIX/tmp/moltis-termux.tar.gz"
 
-# 2. Install Cloudflared (The OpenTunnel Engine)
-echo "Installing Cloudflared (Native aarch64)..."
+# 3. Setup Cloudflared (For Public Fallback Only)
 if [ ! -f "$PREFIX/bin/cloudflared" ]; then
     curl -L "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64" -o "$PREFIX/bin/cloudflared"
     chmod +x "$PREFIX/bin/cloudflared"
 fi
 
-# Helper: The Universal Tunnel Command
-cat <<EOF > "$PREFIX/bin/moltis-tunnel"
+# Helper: The Node Swapper (Required for VS Code Remote-SSH on Android)
+cat <<EOF > "$PREFIX/bin/moltis-fix-vscode"
 #!/usr/bin/env bash
-echo -e "${CYAN}Starting OpenTunnel (Powered by Cloudflare)...${NC}"
-echo -e "This will expose your Moltis Web UI to the internet safely."
-cloudflared tunnel --url http://localhost:3000
+BIN_DIR=\$HOME/.vscode-server/bin
+if [ -d "\$BIN_DIR" ]; then
+    echo "Healing VS Code Server for Android VPS Mode..."
+    for dir in "\$BIN_DIR"/*; do
+        if [ -d "\$dir/bin" ] && [ -f "\$dir/node" ] && [ ! -L "\$dir/node" ]; then
+            mv "\$dir/node" "\$dir/node.broken"
+            ln -s "\$PREFIX/bin/node" "\$dir/node"
+        fi
+    done
+fi
 EOF
-chmod +x "$PREFIX/bin/moltis-tunnel"
+chmod +x "$PREFIX/bin/moltis-fix-vscode"
 
-# Helper: The God Command (Updated)
+# Helper: The God Command (Tailscale Focused)
 cat <<EOF > "$PREFIX/bin/moltis-up"
 #!/usr/bin/env bash
 sshd
 termux-wake-lock
+moltis-fix-vscode > /dev/null 2>&1
+
+IP=\$(ifconfig tun0 2>/dev/null | grep 'inet ' | awk '{print \$2}' || ifconfig wlan0 2>/dev/null | grep 'inet ' | awk '{print \$2}')
+
 echo -e "${CYAN}-------------------------------------------------------${NC}"
-echo -e "${GREEN}Moltis Gateway starting...${NC}"
-echo -e "${GREEN}SSH Local:${NC} Online (Port 8022)"
-echo -e "${CYAN}Web Tunnel:${NC} Run 'moltis-tunnel' to get a public URL"
+echo -e "${GREEN}Moltis VPS is Online!${NC}"
+echo -e "${CYAN}Tailscale IP:${NC} \$IP"
+echo -e "${CYAN}SSH Access:${NC}   ssh -p 8022 termux@\$IP"
+echo -e "${CYAN}Web UI:${NC}       http://\$IP:3000"
 echo -e "${CYAN}-------------------------------------------------------${NC}"
 echo ""
 moltis
 EOF
 chmod +x "$PREFIX/bin/moltis-up"
 
-# Helper: The SSH Tunnel (For VS Code Remote-SSH)
-cat <<EOF > "$PREFIX/bin/moltis-ssh-tunnel"
+# Helper: The Public Tunnel (Optional)
+cat <<EOF > "$PREFIX/bin/moltis-tunnel"
 #!/usr/bin/env bash
-echo -e "${CYAN}Starting Public SSH Tunnel...${NC}"
-echo -e "Use this URL in your PC's SSH config to connect via VSCodium/OpenTunnel."
-cloudflared tunnel --url tcp://localhost:8022
+echo -e "${CYAN}Starting Anonymous Public Tunnel (Fallback)...${NC}"
+cloudflared tunnel --url http://localhost:3000
 EOF
-chmod +x "$PREFIX/bin/moltis-ssh-tunnel"
+chmod +x "$PREFIX/bin/moltis-tunnel"
 
 # Helper: Update
 cat <<EOF > "$PREFIX/bin/moltis-update"
@@ -80,9 +97,8 @@ curl -fsSL https://raw.githubusercontent.com/Muxd21/moltis-termux/main/install.s
 EOF
 chmod +x "$PREFIX/bin/moltis-update"
 
-echo -e "\n${GREEN}Setup Complete (The Open Way)!${NC}"
+echo -e "\n${GREEN}Setup Complete!${NC}"
 echo "--------------------------------------------------------"
-echo -e "1. ${NC}moltis-up${NC}           (Starts Gateway)"
-echo -e "2. ${NC}moltis-tunnel${NC}       (Exposes Web UI Dashboard)"
-echo -e "3. ${NC}moltis-ssh-tunnel${NC}   (Exposes SSH for VS Code Desktop)"
+echo -e "1. Run ${NC}moltis-up${NC}"
+echo -e "2. Connect via VS Code on PC using your Tailscale IP."
 echo "--------------------------------------------------------"
