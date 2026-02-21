@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Moltis Installer for Android (Termux) - PROOT-LIGHT VERSION
+# Moltis Installer for Android (Termux) - PROOT-DNS FIX VERSION
 
 set -euo pipefail
 
@@ -9,10 +9,10 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 echo -e "${CYAN}-------------------------------------------------------${NC}"
-echo -e "${GREEN}Moltis on Android: Enabling Proot-Light Shims${NC}"
+echo -e "${GREEN}Moltis on Android: Fixing DNS & Network Connectivity${NC}"
 echo -e "${CYAN}-------------------------------------------------------${NC}"
 
-# Install core dependencies (Added proot)
+# Install core dependencies
 pkg update -y
 pkg install -y curl wget tar openssl binutils termux-api coreutils nodejs proot || true
 
@@ -21,15 +21,21 @@ echo "Building Virtual File System..."
 VROOT="$HOME/.moltis-vroot"
 mkdir -p "$VROOT/lib"
 mkdir -p "$VROOT/usr/bin"
+mkdir -p "$VROOT/etc"
 
 # Link the Android Linker to the Musl path VS Code expects
 ln -sf /system/bin/linker64 "$VROOT/lib/ld-musl-aarch64.so.1"
 # Link local C++ libraries to the standard names
 ln -sf "$PREFIX/lib/libc++.so" "$VROOT/lib/libstdc++.so.6"
+
 # Create a dummy ldconfig
 echo '#!/usr/bin/env bash' > "$VROOT/usr/bin/ldconfig"
 echo 'exit 0' >> "$VROOT/usr/bin/ldconfig"
 chmod +x "$VROOT/usr/bin/ldconfig"
+
+# FIX DNS: Create a resolv.conf for the virtual environment
+echo "nameserver 8.8.8.8" > "$VROOT/etc/resolv.conf"
+echo "nameserver 1.1.1.1" >> "$VROOT/etc/resolv.conf"
 
 # 2. Grab the latest Termux build of Moltis
 echo "Fetching latest Moltis Termux build..."
@@ -78,9 +84,9 @@ sshd
 termux-wake-lock
 moltis-fix-vscode > /dev/null 2>&1
 
-# Launch Tunnel with Proot-Light Mapping
+# Launch Tunnel with Proot-Light Mapping & DNS FIX
 VROOT="\$HOME/.moltis-vroot"
-nohup proot -b "\$VROOT/lib:/lib" -b "\$VROOT/usr/bin/ldconfig:/usr/bin/ldconfig" code tunnel > /dev/null 2>&1 &
+nohup proot -b "\$VROOT/lib:/lib" -b "\$VROOT/usr/bin/ldconfig:/usr/bin/ldconfig" -b "\$VROOT/etc/resolv.conf:/etc/resolv.conf" code tunnel > /dev/null 2>&1 &
 
 echo -e "${GREEN}Moltis Gateway starting...${NC}"
 moltis
@@ -91,8 +97,8 @@ chmod +x "$PREFIX/bin/moltis-up"
 cat <<EOF > "$PREFIX/bin/moltis-tunnel"
 #!/usr/bin/env bash
 VROOT="\$HOME/.moltis-vroot"
-echo -e "${CYAN}Starting VS Code Tunnel with Virtual Mapping...${NC}"
-proot -b "\$VROOT/lib:/lib" -b "\$VROOT/usr/bin/ldconfig:/usr/bin/ldconfig" code tunnel
+echo -e "${CYAN}Starting VS Code Tunnel with Virtual Mapping & DNS...${NC}"
+proot -b "\$VROOT/lib:/lib" -b "\$VROOT/usr/bin/ldconfig:/usr/bin/ldconfig" -b "\$VROOT/etc/resolv.conf:/etc/resolv.conf" code tunnel
 EOF
 chmod +x "$PREFIX/bin/moltis-tunnel"
 
@@ -103,7 +109,7 @@ curl -fsSL https://raw.githubusercontent.com/Muxd21/moltis-termux/main/install.s
 EOF
 chmod +x "$PREFIX/bin/moltis-update"
 
-echo -e "\n${GREEN}Setup Updated with Proot-Light!${NC}"
+echo -e "\n${GREEN}Setup Updated with DNS Shims!${NC}"
 echo "--------------------------------------------------------"
 echo -e "Run: ${GREEN}moltis-tunnel${NC}"
 echo "--------------------------------------------------------"
