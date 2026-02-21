@@ -100,6 +100,16 @@ ssh -p 443 termux@<YOUR_PHONE_IP>
 ## 🧠 Why Native?
 Most Android "Linux" setups use **Proot/Ubuntu** which wastes 2GB of space and adds lag. This repository uses **Static Musl Binaries** built via Zig for raw, native speed.
 
+## ⚠️ Troubleshooting
+
+**OpenRouter / SSL / API Connection Errors**  
+If your models fail to load or you see `error sending request for url` inside Moltis, ensure you haven't removed `SSL_CERT_FILE` from your configuration. Android handles SSL root certificates differently than standard Linux.
+
+Make sure your `~/.config/moltis/moltis.toml` includes this exactly as shown:
+```toml
+[env]
+SSL_CERT_FILE = "/data/data/com.termux/files/usr/etc/tls/cert.pem"
+```
 
 ## Uninstall
 ```bash
