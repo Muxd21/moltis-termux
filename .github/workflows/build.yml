@@ -63,12 +63,14 @@ jobs:
         run: |
           mkdir -p bin_tools
           
-          # ── Setup musl-cross toolchain ────────────────────────
-          echo "Setting up aarch64-linux-musl-cross..."
-          curl -fsSL https://musl.cc/aarch64-linux-musl-cross.tgz -o musl-cross.tgz
-          tar -xzf musl-cross.tgz
-          export PATH=$PWD/aarch64-linux-musl-cross/bin:$PATH
-          CROSS_CC=aarch64-linux-musl-gcc
+          # ── Setup Zig for Ultra-Reliable Cross-Compilation ───
+          echo "Installing Zig..."
+          curl -fsSL https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz -o zig.tar.xz
+          tar -xf zig.tar.xz
+          export PATH=$PWD/zig-linux-x86_64-0.13.0:$PATH
+          
+          # We use 'zig cc' as a drop-in replacement for aarch64-musl-gcc
+          ZIG_TARGET="aarch64-linux-musl"
           
           # ── Build entr ─────────────────────────────────────────
           echo "Building entr..."
@@ -76,7 +78,7 @@ jobs:
           tar -xzf entr.tar.gz
           cd entr-5.7
           ./configure
-          make CC=$CROSS_CC LDFLAGS="-static"
+          make CC="zig cc -target $ZIG_TARGET" LDFLAGS="-static"
           cp entr ../bin_tools/
           cd ..
           
@@ -85,7 +87,8 @@ jobs:
           curl -fsSL http://www.dest-unreach.org/socat/download/socat-1.8.0.2.tar.gz -o socat.tar.gz
           tar -xzf socat.tar.gz
           cd socat-1.8.0.2
-          CC=$CROSS_CC ./configure --host=aarch64-linux-musl LDFLAGS="-static"
+          # Force zig as the compiler for configure
+          CC="zig cc -target $ZIG_TARGET" ./configure --host=aarch64-linux-musl LDFLAGS="-static"
           make -j$(nproc)
           cp socat ../bin_tools/
           cd ..
@@ -95,8 +98,7 @@ jobs:
           curl -fsSL https://github.com/yrutschle/sslh/archive/refs/tags/v1.22c.tar.gz -o sslh.tar.gz
           tar -xzf sslh.tar.gz
           cd sslh-1.22c
-          # Disable optional libs to ensure pure static build
-          make CC=$CROSS_CC USELIBCONFIG= USELIBWRAP= USELIBPCRE= LDFLAGS="-static" sslh-fork
+          make CC="zig cc -target $ZIG_TARGET" USELIBCONFIG= USELIBWRAP= USELIBPCRE= LDFLAGS="-static" sslh-fork
           cp sslh-fork ../bin_tools/sslh
           cd ..
 
