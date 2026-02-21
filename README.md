@@ -13,7 +13,7 @@ Turn your phone into a professional, private AI VPS. This setup runs natively on
 Paste this into Termux (F-Droid version):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Muxd21/moltis-termux/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Muxd21/moltis-termux/vps/install.sh | bash
 ```
 
 ## 🔒 The Private VPS Workflow (Tailscale)

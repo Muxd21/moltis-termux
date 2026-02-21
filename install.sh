@@ -128,7 +128,7 @@ chmod +x "$PREFIX/bin/moltis-tunnel"
 # Helper: Update
 cat <<EOF > "$PREFIX/bin/moltis-update"
 #!/usr/bin/env bash
-curl -fsSL https://raw.githubusercontent.com/Muxd21/moltis-termux/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Muxd21/moltis-termux/vps/install.sh | bash
 EOF
 chmod +x "$PREFIX/bin/moltis-update"
 

@@ -68,28 +68,28 @@ jobs:
           
           # ── Build entr ─────────────────────────────────────────
           echo "Building entr..."
-          wget -q https://github.com/eradman/entr/archive/refs/tags/v5.5.tar.gz
-          tar -xzf v5.5.tar.gz
-          cd entr-5.5
-          CC=aarch64-linux-gnu-gcc LDFLAGS="-static" ./configure
-          CC=aarch64-linux-gnu-gcc LDFLAGS="-static" make
+          curl -L https://github.com/eradman/entr/archive/refs/tags/v5.5.tar.gz -o entr.tar.gz
+          tar -xzf entr.tar.gz
+          cd entr-5.*
+          ./configure
+          make CC=aarch64-linux-gnu-gcc LDFLAGS="-static"
           cp entr ../bin_tools/
           cd ..
           
           # ── Build socat ────────────────────────────────────────
           echo "Building socat..."
-          wget -q http://www.dest-unreach.org/socat/download/socat-1.8.0.0.tar.gz
-          tar -xzf socat-1.8.0.0.tar.gz
+          curl -L http://www.dest-unreach.org/socat/download/socat-1.8.0.0.tar.gz -o socat.tar.gz
+          tar -xzf socat.tar.gz
           cd socat-1.8.0.0
-          ./configure --host=aarch64-linux-gnu --prefix=/usr/local LDFLAGS="-static"
+          CC=aarch64-linux-gnu-gcc ./configure --host=aarch64-linux-gnu LDFLAGS="-static"
           make -j$(nproc)
           cp socat ../bin_tools/
           cd ..
           
           # ── Build sslh ─────────────────────────────────────────
           echo "Building sslh..."
-          wget -q https://github.com/yrutschle/sslh/archive/refs/tags/v1.22c.tar.gz
-          tar -xzf v1.22c.tar.gz
+          curl -L https://github.com/yrutschle/sslh/archive/refs/tags/v1.22c.tar.gz -o sslh.tar.gz
+          tar -xzf sslh.tar.gz
           cd sslh-1.22c
           make CC=aarch64-linux-gnu-gcc USELIBCONFIG= USELIBWRAP= LDFLAGS="-static" sslh-fork
           cp sslh-fork ../bin_tools/sslh
