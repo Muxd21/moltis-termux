@@ -68,9 +68,9 @@ jobs:
           
           # ── Build entr ─────────────────────────────────────────
           echo "Building entr..."
-          curl -fsSL https://github.com/eradman/entr/archive/refs/tags/v5.6.tar.gz -o entr.tar.gz
+          curl -fsSL https://eradman.com/entrproject/code/entr-5.7.tar.gz -o entr.tar.gz
           tar -xzf entr.tar.gz
-          cd entr-5.6
+          cd entr-5.7
           ./configure
           make CC=aarch64-linux-gnu-gcc LDFLAGS="-static"
           cp entr ../bin_tools/
