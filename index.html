@@ -403,34 +403,54 @@
         <div class="device-list" id="deviceList"></div>
       </div>
 
+      <!-- System Modes -->
+      <div class="card-title">System Execution Mode</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 24px;">
+        <div
+          style="background: rgba(255,255,255,0.03); padding: 18px; border-radius: 20px; border: 1px solid var(--border);">
+          <h4 style="color: var(--text); font-size: 14px; margin-bottom: 8px;">Simple Gateway</h4>
+          <code
+            style="display: block; background: #000; padding: 10px; border-radius: 10px; color: #10b981; font-size: 11px; margin-bottom: 10px;">moltis-up</code>
+          <p style="font-size: 11px; color: var(--muted); line-height: 1.4;">Tailscale-only access. Lightweight &
+            secure.</p>
+        </div>
+        <div
+          style="background: rgba(59, 130, 246, 0.05); padding: 18px; border-radius: 20px; border: 1px solid var(--accent);">
+          <h4 style="color: var(--accent); font-size: 14px; margin-bottom: 8px;">Pro Dev Suite</h4>
+          <code
+            style="display: block; background: #000; padding: 10px; border-radius: 10px; color: #3b82f6; font-size: 11px; margin-bottom: 10px;">moltis-dev</code>
+          <p style="font-size: 11px; color: var(--text); line-height: 1.4; opacity: 0.8;">The full stack: Mosh, Entr,
+            Socat, Sslh.</p>
+        </div>
+      </div>
+
       <!-- VPS Toolkit -->
       <div class="card-title">Professional VPS Toolkit</div>
       <div class="container" style="padding: 20px;">
-        <p style="font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 12px;">
-          Your Android VPS is now equipped with mission-critical tools for networking resilience and development
-          efficiency.
+        <p style="font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 15px;">
+          Use <code>moltis-dev</code> to activate the mission-critical toolkit for non-stop connectivity and automation.
         </p>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div
-            style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 12px; border: 1px solid var(--border); font-size: 12px;">
-            <strong style="color: var(--accent);">Mosh</strong><br>Persistent SSH
+            style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 14px; border: 1px solid var(--border); font-size: 12px;">
+            <strong style="color: var(--accent);">Mosh</strong><br><span style="opacity:0.7">Roaming SSH</span>
           </div>
           <div
-            style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 12px; border: 1px solid var(--border); font-size: 12px;">
-            <strong style="color: var(--accent);">Entr</strong><br>Hot-Reloading
+            style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 14px; border: 1px solid var(--border); font-size: 12px;">
+            <strong style="color: var(--accent);">Entr</strong><br><span style="opacity:0.7">Hot Reloads</span>
           </div>
           <div
-            style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 12px; border: 1px solid var(--border); font-size: 12px;">
-            <strong style="color: var(--accent);">Socat</strong><br>Socket Plumbing
+            style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 14px; border: 1px solid var(--border); font-size: 12px;">
+            <strong style="color: var(--accent);">Socat</strong><br><span style="opacity:0.7">Pipe Routing</span>
           </div>
           <div
-            style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 12px; border: 1px solid var(--border); font-size: 12px;">
-            <strong style="color: var(--accent);">Sslh</strong><br>Stealth Access
+            style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 14px; border: 1px solid var(--border); font-size: 12px;">
+            <strong style="color: var(--accent);">Sslh</strong><br><span style="opacity:0.7">Port Stealth</span>
           </div>
         </div>
         <a href="https://github.com/Muxd21/moltis-termux/blob/vps/README.md" target="_blank"
-          style="display: inline-block; margin-top: 15px; font-size: 13px; color: var(--accent); text-decoration: none; font-weight: 600;">View
-          VPS Documentation →</a>
+          style="display: inline-block; margin-top: 20px; font-size: 13px; color: var(--accent); text-decoration: none; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Open
+          User Manual →</a>
       </div>
       <div class="storage-info">
         <p data-i18n="storageInfo">Your settings are saved locally in your browser and never sent to any server.</p>

@@ -68,7 +68,7 @@ done
 EOF
 chmod +x "$PREFIX/bin/moltis-fix-vscode"
 
-# Helper: The God Command (Tailscale Focused)
+# Helper: The Simple Gateway (Tailscale Focused)
 cat <<EOF > "$PREFIX/bin/moltis-up"
 #!/usr/bin/env bash
 sshd
@@ -79,8 +79,8 @@ moltis-fix-vscode > /dev/null 2>&1
 IP=\$(ifconfig tun0 2>/dev/null | grep 'inet ' | awk '{print \$2}' || ifconfig wlan0 2>/dev/null | grep 'inet ' | awk '{print \$2}')
 
 echo -e "${CYAN}-------------------------------------------------------${NC}"
-echo -e "${GREEN}Moltis VPS is Online!${NC}"
-echo -e "${CYAN}Tailscale IP:${NC} \$IP"
+echo -e "${GREEN}Moltis Simple Gateway is Online!${NC}"
+echo -e "${CYAN}IP:${NC} \$IP"
 echo -e "${CYAN}SSH Access:${NC}   ssh -p 8022 termux@\$IP"
 echo -e "${CYAN}Web UI:${NC}       http://\$IP:3000"
 echo -e "${CYAN}-------------------------------------------------------${NC}"
@@ -88,6 +88,34 @@ echo ""
 moltis
 EOF
 chmod +x "$PREFIX/bin/moltis-up"
+
+# Helper: The Professional Dev Mode (The Full Stack)
+cat <<EOF > "$PREFIX/bin/moltis-dev"
+#!/usr/bin/env bash
+sshd
+export SSL_CERT_FILE="\$PREFIX/etc/tls/cert.pem"
+termux-wake-lock
+moltis-fix-vscode > /dev/null 2>&1
+
+# Start SSLH Multiplexer (Forwarding 443 to SSH/3000)
+# We use port 4433 as a non-priv substitute if 443 fails
+sslh-fork --user \$(whoami) --listen 0.0.0.0:4433 --ssh 127.0.0.1:8022 --http 127.0.0.1:3000 --pidfile /tmp/sslh.pid 2>/dev/null || true
+
+IP=\$(ifconfig tun0 2>/dev/null | grep 'inet ' | awk '{print \$2}' || ifconfig wlan0 2>/dev/null | grep 'inet ' | awk '{print \$2}')
+
+echo -e "${CYAN}-------------------------------------------------------${NC}"
+echo -e "${GREEN}Moltis PROFESSIONAL DEV MODE Online! 🚀${NC}"
+echo -e "${CYAN}Full Stack:${NC} Mosh + Entr + Socat + Sslh"
+echo -e "${CYAN}IP:${NC} \$IP"
+echo -e "${CYAN}Resilient Access (Mosh):${NC} mosh --ssh=\"ssh -p 8022\" termux@\$IP"
+echo -e "${CYAN}Stealth Multiplexer:${NC}     0.0.0.0:4433 (multiplexes SSH/HTTP)"
+echo -e "${CYAN}-------------------------------------------------------${NC}"
+echo -e "${CYAN}Watch logs with Entr:${NC} ls ~/.moltis/*.log | entr tail -f"
+echo -e "${CYAN}-------------------------------------------------------${NC}"
+echo ""
+moltis
+EOF
+chmod +x "$PREFIX/bin/moltis-dev"
 
 # Helper: The Public Tunnel (Optional)
 cat <<EOF > "$PREFIX/bin/moltis-tunnel"

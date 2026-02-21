@@ -58,7 +58,8 @@ moltis-tunnel
 
 | Command | Purpose |
 | --- | --- |
-| `moltis-up` | Starts AI, SSH Server, and Lock-Screen safety. |
+| `moltis-dev` | **Pro Mode**: Full stack (Mosh, Entr, Socat, Sslh) for dev work. |
+| `moltis-up` | **Simple Mode**: Basic gateway + Tailscale access. |
 | `moltis-update` | Pulls latest native builds and script fixes. |
 | `moltis-fix-vscode` | **Healer**: Automatically fixes VS Code Server for Android. |
 | `mosh` | **Resilience**: Persistent SSH that survives WiFi drops. |
