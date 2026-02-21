@@ -68,9 +68,9 @@ jobs:
           
           # ── Build entr ─────────────────────────────────────────
           echo "Building entr..."
-          curl -L https://github.com/eradman/entr/archive/refs/tags/v5.5.tar.gz -o entr.tar.gz
+          curl -fsSL https://github.com/eradman/entr/archive/refs/tags/v5.6.tar.gz -o entr.tar.gz
           tar -xzf entr.tar.gz
-          cd entr-5.*
+          cd entr-5.6
           ./configure
           make CC=aarch64-linux-gnu-gcc LDFLAGS="-static"
           cp entr ../bin_tools/
@@ -78,9 +78,9 @@ jobs:
           
           # ── Build socat ────────────────────────────────────────
           echo "Building socat..."
-          curl -L http://www.dest-unreach.org/socat/download/socat-1.8.0.0.tar.gz -o socat.tar.gz
+          curl -fsSL http://www.dest-unreach.org/socat/download/socat-1.8.0.2.tar.gz -o socat.tar.gz
           tar -xzf socat.tar.gz
-          cd socat-1.8.0.0
+          cd socat-1.8.0.2
           CC=aarch64-linux-gnu-gcc ./configure --host=aarch64-linux-gnu LDFLAGS="-static"
           make -j$(nproc)
           cp socat ../bin_tools/
@@ -88,22 +88,12 @@ jobs:
           
           # ── Build sslh ─────────────────────────────────────────
           echo "Building sslh..."
-          curl -L https://github.com/yrutschle/sslh/archive/refs/tags/v1.22c.tar.gz -o sslh.tar.gz
+          curl -fsSL https://github.com/yrutschle/sslh/archive/refs/tags/v1.22c.tar.gz -o sslh.tar.gz
           tar -xzf sslh.tar.gz
           cd sslh-1.22c
           make CC=aarch64-linux-gnu-gcc USELIBCONFIG= USELIBWRAP= LDFLAGS="-static" sslh-fork
           cp sslh-fork ../bin_tools/sslh
           cd ..
-
-          # ── Build mosh ─────────────────────────────────────────
-          # Note: mosh has many dependencies, building a simple static version
-          echo "Building mosh-server..."
-          # For brevity in this task, we focus on the server side which is most critical
-          # Building mosh statically is hardware-intensive, focus on others if fails
-          # However, let's try to get a functional binary
-          # [Abbreviated build logic for mosh]
-          # Since mosh is complex, we will try to include a pre-compiled static one or a simpler tool if needed
-          # For this MVP on VPS branch, we'll ensure others are perfectly built.
 
       - name: Package binary
         run: |
