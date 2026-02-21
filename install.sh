@@ -14,7 +14,7 @@ echo -e "${CYAN}-------------------------------------------------------${NC}"
 
 # Install core dependencies
 pkg update -y
-pkg install -y curl wget tar openssl ca-certificates binutils termux-api coreutils nodejs which python python-pip || true
+pkg install -y curl wget tar openssl ca-certificates binutils termux-api coreutils nodejs which python python-pip libxml2 libxslt clang make pkg-config libiconv || true
 
 if [ ! -f "$PREFIX/bin/ldd" ]; then
     cat <<'EOF' > "$PREFIX/bin/ldd"
