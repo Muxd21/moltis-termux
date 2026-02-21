@@ -18,35 +18,35 @@ curl -fsSL https://raw.githubusercontent.com/Muxd21/moltis-termux/main/install.s
 
 ## ⚡ The Only Two Commands You Need
 
-### 1. `moltis-up` (The "Everything" Command)
-Run this to start your entire stack:
+### 1. `moltis-up` (The God Command)
+Starts the entire stack:
 * Starts **Moltis AI Gateway**.
-* Starts **VS Code Remote Tunnel** (Background).
-* Starts **SSH Server** (Fallback).
-* Disables CPU sleep (Wake Lock).
+* Starts **VS Code Remote Tunnel** in the background.
+* Starts **SSH Server** as a fallback.
+* Locks CPU to prevent sleep.
 
 ### 2. `moltis-update`
-Run this to pull the latest static builds and scripts from GitHub.
+Pulls the latest static builds and scripts from GitHub.
 
 ---
 
-## 🛠️ First-Time Setup (VS Code)
-If you've never used the VS Code tunnel before, run this once to link your GitHub/Microsoft account:
-```bash
-moltis-tunnel
-```
-Follow the link, enter the code, and you are done. From then on, `moltis-up` will handle it automatically.
+## 🍰 First-Time Setup (VS Code)
+1. Run `moltis-tunnel` on your phone to link your GitHub/Microsoft account.
+2. **On your PC VS Code**: Install the **"Remote - Tunnels"** extension.
+3. Open **Remote Explorer** -> Select **Tunnels** -> **Sign In**.
+4. Click your device name to connect. No IP or SSH config required!
 
 ## 🧠 Behind the Scenes
 
 This setup uses **Static Musl Binaries** built via GitHub Actions.
-* **Zero Overhead**: No Ubuntu/Proot (saving 1.5GB+).
-* **Self-Healing**: `moltis-up` automatically detects and repairs VS Code server binaries for Android compatibility.
+* **Zero Overhead**: No Ubuntu/Proot distributions (saving 1.5GB+).
+* **Self-Healing**: Uses "Proot-Light" + "Node-Swapping" to bypass Android security blocks (PIE) automatically.
 
 ## Uninstall
 ```bash
 rm $PREFIX/bin/moltis*
 rm -rf ~/.moltis
+rm -rf ~/.moltis-vroot
 ```
 
 ## License
