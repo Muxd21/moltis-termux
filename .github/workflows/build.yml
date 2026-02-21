@@ -51,8 +51,9 @@ jobs:
           repository: moltis-org/moltis
           ref: ${{ github.event.inputs.moltis_version || needs.check-version.outputs.latest_version }}
 
-      - name: Patch Termux SSL Bug
+      - name: Patch Termux SSL + HTTP Client
         run: |
+          # ── Patch 1: Inject [env] vars into the process environment ──
           awk '/pub fn apply_env_overrides\(config: MoltisConfig\) -> MoltisConfig \{/ {
             print "#[allow(unsafe_code)]"
             print
@@ -63,6 +64,51 @@ jobs:
             print "    }"
             next
           }1' crates/config/src/loader.rs > tmp.rs && mv tmp.rs crates/config/src/loader.rs
+
+          # ── Patch 2: Fix shared_http_client to load Termux CA certs ──
+          cat > /tmp/http_client_patch.rs << 'RUSTPATCH'
+          /// Shared HTTP client for LLM providers.
+          ///
+          /// All providers that don't need custom redirect/proxy settings should
+          /// reuse this client to share connection pools, DNS cache, and TLS sessions.
+          ///
+          /// On Termux/Android the standard certificate paths do not exist, so we
+          /// explicitly load root certificates from `SSL_CERT_FILE` (or the well-known
+          /// Termux path) into the `reqwest::ClientBuilder`.
+          pub fn shared_http_client() -> &'static reqwest::Client {
+              static CLIENT: std::sync::LazyLock<reqwest::Client> =
+                  std::sync::LazyLock::new(|| {
+                      let mut builder = reqwest::ClientBuilder::new();
+
+                      // Try to load PEM certs from SSL_CERT_FILE or common Termux path.
+                      let cert_path = std::env::var("SSL_CERT_FILE")
+                          .ok()
+                          .unwrap_or_else(|| "/data/data/com.termux/files/usr/etc/tls/cert.pem".into());
+
+                      if let Ok(pem_data) = std::fs::read(&cert_path) {
+                          for cert_result in reqwest::tls::Certificate::from_pem_bundle(&pem_data) {
+                              builder = builder.add_root_certificate(cert_result);
+                          }
+                      }
+
+                      builder.build().unwrap_or_else(|_| reqwest::Client::new())
+                  });
+              &CLIENT
+          }
+          RUSTPATCH
+
+          # Use Python to do a reliable multi-line replacement
+          python3 << 'PYEOF'
+          import re, pathlib
+          p = pathlib.Path("crates/agents/src/lib.rs")
+          src = p.read_text()
+          # Match the entire shared_http_client function
+          pattern = r'(?s)/// Shared HTTP client.*?pub fn shared_http_client\(\)[^}]*\{[^}]*\{[^}]*\}[^}]*\}'
+          replacement = open("/tmp/http_client_patch.rs").read().strip()
+          new_src = re.sub(pattern, replacement, src)
+          p.write_text(new_src)
+          print("Patched shared_http_client in lib.rs")
+          PYEOF
 
       - name: Install cross
         uses: taiki-e/install-action@cross
