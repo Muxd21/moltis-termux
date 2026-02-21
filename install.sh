@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Moltis Installer for Android (Termux) - PROOT-DNS FIX VERSION
+# Moltis Installer for Android (Termux) - OPENTUNNEL / CLOUDFLARE VERSION
 
 set -euo pipefail
 
@@ -9,35 +9,14 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 echo -e "${CYAN}-------------------------------------------------------${NC}"
-echo -e "${GREEN}Moltis on Android: Fixing DNS & Network Connectivity${NC}"
+echo -e "${GREEN}Moltis on Android: The OpenTunnel (Cloudflare) Setup${NC}"
 echo -e "${CYAN}-------------------------------------------------------${NC}"
 
 # Install core dependencies
 pkg update -y
-pkg install -y curl wget tar openssl binutils termux-api coreutils nodejs proot || true
+pkg install -y curl wget tar openssl binutils termux-api coreutils nodejs || true
 
-# 1. Setup Virtual File System (The "Fake Root")
-echo "Building Virtual File System..."
-VROOT="$HOME/.moltis-vroot"
-mkdir -p "$VROOT/lib"
-mkdir -p "$VROOT/usr/bin"
-mkdir -p "$VROOT/etc"
-
-# Link the Android Linker to the Musl path VS Code expects
-ln -sf /system/bin/linker64 "$VROOT/lib/ld-musl-aarch64.so.1"
-# Link local C++ libraries to the standard names
-ln -sf "$PREFIX/lib/libc++.so" "$VROOT/lib/libstdc++.so.6"
-
-# Create a dummy ldconfig
-echo '#!/usr/bin/env bash' > "$VROOT/usr/bin/ldconfig"
-echo 'exit 0' >> "$VROOT/usr/bin/ldconfig"
-chmod +x "$VROOT/usr/bin/ldconfig"
-
-# FIX DNS: Create a resolv.conf for the virtual environment
-echo "nameserver 8.8.8.8" > "$VROOT/etc/resolv.conf"
-echo "nameserver 1.1.1.1" >> "$VROOT/etc/resolv.conf"
-
-# 2. Grab the latest Termux build of Moltis
+# 1. Grab the latest Termux build of Moltis
 echo "Fetching latest Moltis Termux build..."
 LATEST_RELEASE=$(curl -s "https://api.github.com/repos/Muxd21/moltis-termux/releases/latest")
 DOWNLOAD_URL=$(echo "$LATEST_RELEASE" | grep -o '"browser_download_url": "[^"]*moltis-termux-aarch64.tar.gz"' | head -n 1 | cut -d'"' -f4)
@@ -49,67 +28,61 @@ fi
 
 echo -e "Downloading Moltis binary..."
 curl -sL "$DOWNLOAD_URL" -o "$PREFIX/tmp/moltis-termux.tar.gz"
-
-echo "Extracting binary..."
 tar -xzf "$PREFIX/tmp/moltis-termux.tar.gz" -C "$PREFIX/tmp"
 mv "$PREFIX/tmp/moltis" "$PREFIX/bin/moltis"
 chmod +x "$PREFIX/bin/moltis"
 rm -f "$PREFIX/tmp/moltis-termux.tar.gz"
 
-# 3. Setup VS Code CLI
-echo "Installing VS Code CLI..."
-curl -sL "https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-arm64" -o "$PREFIX/tmp/vscode_cli.tar.gz"
-tar -xzf "$PREFIX/tmp/vscode_cli.tar.gz" -C "$PREFIX/bin"
-rm "$PREFIX/tmp/vscode_cli.tar.gz"
-
-# Helper: The SSH Patcher
-cat <<EOF > "$PREFIX/bin/moltis-fix-vscode"
-#!/usr/bin/env bash
-BIN_DIR=\$HOME/.vscode-server/bin
-if [ -d "\$BIN_DIR" ]; then
-    for dir in "\$BIN_DIR"/*; do
-        if [ -d "\$dir/bin" ] && [ -f "\$dir/node" ] && [ ! -L "\$dir/node" ]; then
-            mv "\$dir/node" "\$dir/node.broken"
-            ln -s "\$PREFIX/bin/node" "\$dir/node"
-        fi
-    done
+# 2. Install Cloudflared (The OpenTunnel Engine)
+echo "Installing Cloudflared (Native aarch64)..."
+if [ ! -f "$PREFIX/bin/cloudflared" ]; then
+    curl -L "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64" -o "$PREFIX/bin/cloudflared"
+    chmod +x "$PREFIX/bin/cloudflared"
 fi
-EOF
-chmod +x "$PREFIX/bin/moltis-fix-vscode"
 
-# Helper: All-In-One Up
+# Helper: The Universal Tunnel Command
+cat <<EOF > "$PREFIX/bin/moltis-tunnel"
+#!/usr/bin/env bash
+echo -e "${CYAN}Starting OpenTunnel (Powered by Cloudflare)...${NC}"
+echo -e "This will expose your Moltis Web UI to the internet safely."
+cloudflared tunnel --url http://localhost:3000
+EOF
+chmod +x "$PREFIX/bin/moltis-tunnel"
+
+# Helper: The God Command (Updated)
 cat <<EOF > "$PREFIX/bin/moltis-up"
 #!/usr/bin/env bash
 sshd
 termux-wake-lock
-moltis-fix-vscode > /dev/null 2>&1
-
-# Launch Tunnel with Proot-Light Mapping & DNS FIX
-VROOT="\$HOME/.moltis-vroot"
-nohup proot -b "\$VROOT/lib:/lib" -b "\$VROOT/usr/bin/ldconfig:/usr/bin/ldconfig" -b "\$VROOT/etc/resolv.conf:/etc/resolv.conf" code tunnel > /dev/null 2>&1 &
-
+echo -e "${CYAN}-------------------------------------------------------${NC}"
 echo -e "${GREEN}Moltis Gateway starting...${NC}"
+echo -e "${GREEN}SSH Local:${NC} Online (Port 8022)"
+echo -e "${CYAN}Web Tunnel:${NC} Run 'moltis-tunnel' to get a public URL"
+echo -e "${CYAN}-------------------------------------------------------${NC}"
+echo ""
 moltis
 EOF
 chmod +x "$PREFIX/bin/moltis-up"
 
-# Helper: Tunnel Starter (The authorized way)
-cat <<EOF > "$PREFIX/bin/moltis-tunnel"
+# Helper: The SSH Tunnel (For VS Code Remote-SSH)
+cat <<EOF > "$PREFIX/bin/moltis-ssh-tunnel"
 #!/usr/bin/env bash
-VROOT="\$HOME/.moltis-vroot"
-echo -e "${CYAN}Starting VS Code Tunnel with Virtual Mapping & DNS...${NC}"
-proot -b "\$VROOT/lib:/lib" -b "\$VROOT/usr/bin/ldconfig:/usr/bin/ldconfig" -b "\$VROOT/etc/resolv.conf:/etc/resolv.conf" code tunnel
+echo -e "${CYAN}Starting Public SSH Tunnel...${NC}"
+echo -e "Use this URL in your PC's SSH config to connect via VSCodium/OpenTunnel."
+cloudflared tunnel --url tcp://localhost:8022
 EOF
-chmod +x "$PREFIX/bin/moltis-tunnel"
+chmod +x "$PREFIX/bin/moltis-ssh-tunnel"
 
-# Helper: Global Update
+# Helper: Update
 cat <<EOF > "$PREFIX/bin/moltis-update"
 #!/usr/bin/env bash
 curl -fsSL https://raw.githubusercontent.com/Muxd21/moltis-termux/main/install.sh | bash
 EOF
 chmod +x "$PREFIX/bin/moltis-update"
 
-echo -e "\n${GREEN}Setup Updated with DNS Shims!${NC}"
+echo -e "\n${GREEN}Setup Complete (The Open Way)!${NC}"
 echo "--------------------------------------------------------"
-echo -e "Run: ${GREEN}moltis-tunnel${NC}"
+echo -e "1. ${NC}moltis-up${NC}           (Starts Gateway)"
+echo -e "2. ${NC}moltis-tunnel${NC}       (Exposes Web UI Dashboard)"
+echo -e "3. ${NC}moltis-ssh-tunnel${NC}   (Exposes SSH for VS Code Desktop)"
 echo "--------------------------------------------------------"
