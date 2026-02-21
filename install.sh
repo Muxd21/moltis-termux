@@ -54,16 +54,17 @@ fi
 # Helper: The Node Swapper (Required for VS Code Remote-SSH on Android)
 cat <<EOF > "$PREFIX/bin/moltis-fix-vscode"
 #!/usr/bin/env bash
-BIN_DIR=\$HOME/.vscode-server/bin
-if [ -d "\$BIN_DIR" ]; then
-    echo "Healing VS Code Server for Android VPS Mode..."
-    for dir in "\$BIN_DIR"/*; do
-        if [ -d "\$dir/bin" ] && [ -f "\$dir/node" ] && [ ! -L "\$dir/node" ]; then
-            mv "\$dir/node" "\$dir/node.broken"
-            ln -s "\$PREFIX/bin/node" "\$dir/node"
-        fi
-    done
-fi
+for BASE_DIR in "\$HOME/.vscode-server/bin" "\$HOME/.antigravity-server/bin"; do
+    if [ -d "\$BASE_DIR" ]; then
+        echo "Healing Server for Android VPS Mode (\$BASE_DIR)..."
+        for dir in "\$BASE_DIR"/*; do
+            if [ -d "\$dir/bin" ] && [ -f "\$dir/node" ] && [ ! -L "\$dir/node" ]; then
+                mv "\$dir/node" "\$dir/node.broken"
+                ln -s "\$PREFIX/bin/node" "\$dir/node"
+            fi
+        done
+    fi
+done
 EOF
 chmod +x "$PREFIX/bin/moltis-fix-vscode"
 
