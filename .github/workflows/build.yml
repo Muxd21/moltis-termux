@@ -98,12 +98,25 @@ jobs:
           curl -fsSL https://github.com/yrutschle/sslh/archive/refs/tags/v1.22c.tar.gz -o sslh.tar.gz
           tar -xzf sslh.tar.gz
           cd sslh-1.22c
-          # Rename variables to hide them from Makefile logic
-          sed -i 's/USELIBPCRE/DISABLED_PCRE/g' Makefile
-          sed -i 's/USELIBCONFIG/DISABLED_CONFIG/g' Makefile
-          sed -i 's/USELIBWRAP/DISABLED_WRAP/g' Makefile
+          # Force-disable all optional libraries in Makefile by clearing their values
+          sed -i 's/USELIBPCRE=.*/USELIBPCRE=/' Makefile
+          sed -i 's/USELIBCONFIG=.*/USELIBCONFIG=/' Makefile
+          sed -i 's/USELIBWRAP=.*/USELIBWRAP=/' Makefile
+          # Remove any already-defined flags just in case
+          sed -i 's/-DLIBPCRE//g' Makefile
+          sed -i 's/-lpcre2-8//g' Makefile
+          
+          echo "Starting sslh-fork compilation..."
           make CC="zig cc -target $ZIG_TARGET" LDFLAGS="-static" sslh-fork
-          cp sslh-fork ../bin_tools/sslh
+          
+          if [ -f sslh-fork ]; then
+            cp sslh-fork ../bin_tools/sslh
+            echo "SSLH build successful!"
+          else
+            echo "Error: sslh-fork binary not found!"
+            ls -la
+            exit 1
+          fi
           cd ..
 
       - name: Package binary
