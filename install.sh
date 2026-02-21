@@ -38,11 +38,11 @@ if [ -z "$DOWNLOAD_URL" ]; then
     exit 1
 fi
 
-echo -e "Downloading Moltis binary..."
+echo -e "Downloading Moltis & VPS Tools..."
 curl -sL "$DOWNLOAD_URL" -o "$PREFIX/tmp/moltis-termux.tar.gz"
-tar -xzf "$PREFIX/tmp/moltis-termux.tar.gz" -C "$PREFIX/tmp"
-mv "$PREFIX/tmp/moltis" "$PREFIX/bin/moltis"
-chmod +x "$PREFIX/bin/moltis"
+# Extract everything directly to $PREFIX/bin
+tar -xzf "$PREFIX/tmp/moltis-termux.tar.gz" -C "$PREFIX/bin"
+chmod +x "$PREFIX/bin/moltis" "$PREFIX/bin/mosh"* "$PREFIX/bin/entr" "$PREFIX/bin/socat" "$PREFIX/bin/sslh" 2>/dev/null || true
 rm -f "$PREFIX/tmp/moltis-termux.tar.gz"
 
 # 3. Setup Cloudflared (For Public Fallback Only)

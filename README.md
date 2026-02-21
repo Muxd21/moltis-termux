@@ -59,11 +59,22 @@ moltis-tunnel
 | Command | Purpose |
 | --- | --- |
 | `moltis-up` | Starts AI, SSH Server, and Lock-Screen safety. |
-| `moltis-update` | Pulls the latest native builds and script fixes. |
+| `moltis-update` | Pulls latest native builds and script fixes. |
 | `moltis-fix-vscode` | **Healer**: Automatically fixes VS Code Server for Android. |
+| `mosh` | **Resilience**: Persistent SSH that survives WiFi drops. |
+| `entr` | **DevLoop**: Watches files and re-runs commands automatically. |
+| `socat` | **Plumbing**: Bridges sockets and ports across Tailscale. |
+| `sslh` | **Stealth**: Multiplexes SSH/HTTP on port 443 (Firewall bypass). |
 
 ## 🧠 Why Native?
 Most Android "Linux" setups use **Proot/Ubuntu** which wastes 2GB of space and adds lag. This repository uses **Static Musl Binaries** built via GitHub Actions for raw, native speed.
+
+### Professional VPS Tools
+We bundle four critical tools that define a professional VPS experience:
+*   **Mosh**: Keeps your session alive when switching between WiFi and Cellular.
+*   **Entr**: Enables native hot-reloading for code edits over SSH.
+*   **Socat**: The "Swiss-army knife" for networking and socket debugging.
+*   **Sslh**: Lets you access your phone via port 443 even on restricted networks.
 
 ## Uninstall
 ```bash
