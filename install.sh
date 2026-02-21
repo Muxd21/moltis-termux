@@ -14,7 +14,7 @@ echo -e "${CYAN}-------------------------------------------------------${NC}"
 
 # Install core dependencies
 pkg update -y
-pkg install -y curl wget tar openssl binutils termux-api coreutils nodejs || true
+pkg install -y curl wget tar openssl binutils termux-api coreutils nodejs which || true
 
 # 1. Setup Environment Shims (Critical for VS Code Remote-SSH)
 if [ ! -f "$PREFIX/bin/ldd" ]; then
