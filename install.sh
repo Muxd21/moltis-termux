@@ -14,7 +14,7 @@ echo -e "${CYAN}-------------------------------------------------------${NC}"
 
 # Install core dependencies
 pkg update -y
-pkg install -y curl wget tar openssl binutils termux-api coreutils nodejs which || true
+pkg install -y curl wget tar openssl ca-certificates binutils termux-api coreutils nodejs which || true
 
 if [ ! -f "$PREFIX/bin/ldd" ]; then
     cat <<'EOF' > "$PREFIX/bin/ldd"
@@ -72,6 +72,7 @@ chmod +x "$PREFIX/bin/moltis-fix-vscode"
 cat <<EOF > "$PREFIX/bin/moltis-up"
 #!/usr/bin/env bash
 sshd
+export SSL_CERT_FILE="\$PREFIX/etc/tls/cert.pem"
 termux-wake-lock
 moltis-fix-vscode > /dev/null 2>&1
 
