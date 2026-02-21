@@ -51,6 +51,18 @@ jobs:
           repository: moltis-org/moltis
           ref: ${{ github.event.inputs.moltis_version || needs.check-version.outputs.latest_version }}
 
+      - name: Patch Termux SSL Bug
+        run: |
+          awk '/pub fn apply_env_overrides\(config: MoltisConfig\) -> MoltisConfig \{/ {
+            print
+            print "    for (k, v) in &config.env {"
+            print "        if std::env::var(k).is_err() {"
+            print "            std::env::set_var(k, v);"
+            print "        }"
+            print "    }"
+            next
+          }1' crates/config/src/loader.rs > tmp.rs && mv tmp.rs crates/config/src/loader.rs
+
       - name: Install cross
         uses: taiki-e/install-action@cross
 
