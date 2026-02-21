@@ -98,10 +98,10 @@ jobs:
           curl -fsSL https://github.com/yrutschle/sslh/archive/refs/tags/v1.22c.tar.gz -o sslh.tar.gz
           tar -xzf sslh.tar.gz
           cd sslh-1.22c
-          # Aggressively disable dependencies in Makefile to ensure zero external deps
-          sed -i 's/USELIBCONFIG=1/USELIBCONFIG=/' Makefile
-          sed -i 's/USELIBWRAP=1/USELIBWRAP=/' Makefile
-          sed -i 's/USELIBPCRE=1/USELIBPCRE=/' Makefile
+          # Rename variables to hide them from Makefile logic
+          sed -i 's/USELIBPCRE/DISABLED_PCRE/g' Makefile
+          sed -i 's/USELIBCONFIG/DISABLED_CONFIG/g' Makefile
+          sed -i 's/USELIBWRAP/DISABLED_WRAP/g' Makefile
           make CC="zig cc -target $ZIG_TARGET" LDFLAGS="-static" sslh-fork
           cp sslh-fork ../bin_tools/sslh
           cd ..
