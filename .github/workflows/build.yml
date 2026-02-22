@@ -78,7 +78,7 @@ jobs:
               pub fn shared_http_client() -> &'static reqwest::Client {
                   static CLIENT: std::sync::LazyLock<reqwest::Client> =
                       std::sync::LazyLock::new(|| {
-                          println!(\"!!! HTTP CLIENT INIT START (V10 - GHOST) !!!\");
+                          println!(\"!!! HTTP CLIENT INIT START (V11 - SPECTER) !!!\");
                           
                           let mut builder = reqwest::ClientBuilder::new()
                               .http1_only()
@@ -99,7 +99,7 @@ jobs:
                           for (domain, ips) in bips {
                               for ip in ips {
                                   if let Ok(addr) = ip.parse::<std::net::IpAddr>() {
-                                      builder = builder.resolve(domain, std::net::SocketAddr::new(addr, 443));
+                                      println!(\"!!! HTTP CLIENT: Resolving {} -> {} !!!\", domain, ip); builder = builder.resolve(domain, std::net::SocketAddr::new(addr, 443));
                                   }
                               }
                           }
@@ -121,7 +121,7 @@ jobs:
                               println!(\"!!! HTTP CLIENT BUILD ERROR: {} !!!\", e);
                               reqwest::Client::new()
                           });
-                          println!(\"!!! HTTP CLIENT INIT COMPLETE (V10 - STABLE) !!!\");
+                          println!(\"!!! HTTP CLIENT INIT COMPLETE (V11 - STABLE) !!!\");
                           client
                       });
                   &CLIENT
@@ -143,27 +143,38 @@ jobs:
           ''').lstrip())
           "
 
-          # -- Patch 2b: Add AGGRESSIVE error printing in providers/mod.rs & openai.rs --
+          # -- Patch 2b: Add AGGRESSIVE error printing with robust multiline regex --
           python3 -c "
-          import pathlib
+          import pathlib, re
           
-          # 1. Patch startup model discovery
+          # 1. Patch startup model discovery & providers
           p_mod = pathlib.Path('crates/agents/src/providers/mod.rs')
           c_mod = p_mod.read_text()
-          c_mod = c_mod.replace('.send().await?', '.send().await.map_err(|e| { println!(\"!!! STARTUP DISCOVERY FAILED: {:?} !!!\", e); e })?')
+          c_mod = re.sub(r'\.send\(\)\s*\.await\?', '.send().await.map_err(|e| { println!(\"!!! STARTUP DISCOVERY FAILED: {:?} !!!\", e); e })?', c_mod)
           p_mod.write_text(c_mod)
 
-          # 2. Patch chat completions (streaming & non-streaming)
+          # 2. Patch chat completions and discovery timeout
           p_ai = pathlib.Path('crates/agents/src/providers/openai.rs')
           c_ai = p_ai.read_text()
-          c_ai = c_ai.replace('.send().await?', '.send().await.map_err(|e| { println!(\"!!! COMPLETION REQUEST FAILED: {:?} !!!\", e); e })?')
-          c_ai = c_ai.replace('.send().await', '.send().await.map_err(|e| { println!(\"!!! STREAMING REQUEST FAILED: {:?} !!!\", e); e })')
+          # Increase discovery timeout from 8s to 20s
+          c_ai = c_ai.replace('Duration::from_secs(8)', 'Duration::from_secs(20)')
+          # Patch .send().await?
+          c_ai = re.sub(r'\.send\(\)\s*\.await\?', '.send().await.map_err(|e| { println!(\"!!! LLM REQUEST ERROR: {:?} !!!\", e); e })?', c_ai)
+          # Patch .send().await
+          c_ai = re.sub(r'\.send\(\)\s*\.await', '.send().await.map_err(|e| { println!(\"!!! LLM STREAM ERROR: {:?} !!!\", e); e })', c_ai)
           p_ai.write_text(c_ai)
+
+          # 3. Patch GitHub update checker to use shared client
+          p_srv = pathlib.Path('crates/gateway/src/server.rs')
+          c_srv = p_srv.read_text()
+          # Replace local builder with shared client
+          c_srv = re.sub(r'let client = match reqwest::Client::builder\(\).*?\.build\(\)\s*\{', 'let client = Ok::<_, anyhow::Error>(moltis_agents::shared_http_client().clone()); if let Ok(client) = {', c_srv, flags=re.DOTALL)
+          p_srv.write_text(c_srv)
           "
 
           # ── Patch 3: Force version change (Anchored to start of line to avoid dependencies) ──
-          find . -name "Cargo.toml" -exec sed -i 's/^version *= \".*\"/version = \"0.9.10-ipv4-v10\"/g' {} +
-          echo "Updated all versions to 0.9.10-ipv4-v10"
+          find . -name "Cargo.toml" -exec sed -i 's/^version *= \".*\"/version = \"0.9.10-ipv4-v11\"/g' {} +
+          echo "Updated all versions to 0.9.10-ipv4-v11"
           
           head -35 crates/agents/src/lib.rs
 
