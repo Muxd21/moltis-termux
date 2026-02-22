@@ -78,7 +78,7 @@ jobs:
               pub fn shared_http_client() -> &'static reqwest::Client {
                   static CLIENT: std::sync::LazyLock<reqwest::Client> =
                       std::sync::LazyLock::new(|| {
-                          println!(\"!!! HTTP CLIENT INIT START (V11 - PHOENIX) !!!\");
+                          println!(\"!!! HTTP CLIENT INIT START (V11 - DRAGON) !!!\");
                           
                           let mut builder = reqwest::ClientBuilder::new()
                               .http1_only()
@@ -167,14 +167,14 @@ jobs:
           # 3. Patch GitHub update checker to use shared client
           p_srv = pathlib.Path('crates/gateway/src/server.rs')
           c_srv = p_srv.read_text()
-          # Replace local builder with shared client
-          c_srv = re.sub(r'let client = match reqwest::Client::builder\(\).*?\.build\(\)\s*\{', 'let client = Ok::<_, anyhow::Error>(moltis_agents::shared_http_client().clone()); if let Ok(client) = {', c_srv, flags=re.DOTALL)
+          # Replace the entire let client = match ... { ... } block
+          c_srv = re.sub(r'let client = match reqwest::Client::builder\(\).*?\.build\(\)\s*\{.*?\};\s*(?=\n\s*loop)', 'let client = moltis_agents::shared_http_client().clone();', c_srv, flags=re.DOTALL)
           p_srv.write_text(c_srv)
           "
 
           # ── Patch 3: Force version change (Anchored to start of line to avoid dependencies) ──
-          find . -name "Cargo.toml" -exec sed -i 's/^version *= \".*\"/version = \"0.9.10-ipv4-v13\"/g' {} +
-          echo "Updated all versions to 0.9.10-ipv4-v13"
+          find . -name "Cargo.toml" -exec sed -i 's/^version *= \".*\"/version = \"0.9.10-ipv4-v14\"/g' {} +
+          echo "Updated all versions to 0.9.10-ipv4-v14"
           
           head -35 crates/agents/src/lib.rs
 
