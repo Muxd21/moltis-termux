@@ -177,15 +177,18 @@ jobs:
           cat << 'EOF' >> crates/agents/src/lib.rs
           
           #[cfg(target_os = "android")]
-          #[no_mangle]
-          pub unsafe extern "C" fn openpty(
-              _amaster: *mut std::ffi::c_int,
-              _aslave: *mut std::ffi::c_int,
-              _name: *mut std::ffi::c_char,
-              _termp: *mut std::ffi::c_void,
-              _winp: *mut std::ffi::c_void,
-          ) -> std::ffi::c_int {
-              -1
+          #[allow(unsafe_code)]
+          pub mod android_bionic_shim {
+              #[unsafe(no_mangle)]
+              pub unsafe extern "C" fn openpty(
+                  _amaster: *mut std::ffi::c_int,
+                  _aslave: *mut std::ffi::c_int,
+                  _name: *mut std::ffi::c_char,
+                  _termp: *mut std::ffi::c_void,
+                  _winp: *mut std::ffi::c_void,
+              ) -> std::ffi::c_int {
+                  -1
+              }
           }
           EOF
 
