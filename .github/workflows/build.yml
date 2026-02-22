@@ -77,16 +77,12 @@ jobs:
               pub mod auth_profiles;
 
               /// Shared HTTP client for LLM providers.
-              ///
-              /// All providers that don't need custom redirect/proxy settings should
-              /// reuse this client to share connection pools, DNS cache, and TLS sessions.
-              ///
-              /// On Termux/Android we:
-              /// 1. Force IPv4 to avoid broken IPv6 routing on mobile networks
-              /// 2. Explicitly load Termux CA certs since standard paths don't exist
               pub fn shared_http_client() -> &'static reqwest::Client {
                   static CLIENT: std::sync::LazyLock<reqwest::Client> =
                       std::sync::LazyLock::new(|| {
+                          // Log initialization so we can verify the patch is active
+                          println!(\"00:00:00 AM.000 INFO moltis_agents: IPv4-forced HTTP client initialized\");
+                          
                           let mut builder = reqwest::ClientBuilder::new()
                               .local_address(std::net::IpAddr::V4(std::net::Ipv4Addr::UNSPECIFIED))
                               .connect_timeout(std::time::Duration::from_secs(15));
@@ -124,7 +120,7 @@ jobs:
           ''').lstrip())
           print('Patched lib.rs')
           "
-          head -20 crates/agents/src/lib.rs
+          head -25 crates/agents/src/lib.rs
 
       - name: Install cross
         uses: taiki-e/install-action@cross
