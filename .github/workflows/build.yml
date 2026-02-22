@@ -154,8 +154,8 @@ jobs:
           p.write_text(c)
           "
 
-          # ── Patch 3: Force version change in all Cargo.tomls (Catches indented workspace versions) ──
-          find . -name "Cargo.toml" -exec sed -i 's/version = \".*\"/version = \"0.9.10-ipv4-v9\"/g' {} +
+          # ── Patch 3: Force version change in all Cargo.tomls (Avoids breaking rust-version) ──
+          find . -name "Cargo.toml" -exec sed -i '/rust-version/! s/version *= \".*\"/version = \"0.9.10-ipv4-v9\"/g' {} +
           echo "Updated all versions to 0.9.10-ipv4-v9"
           
           head -35 crates/agents/src/lib.rs
