@@ -82,6 +82,8 @@ jobs:
                           println!(\"!!! HTTP CLIENT INIT START !!!\");
                           
                           let mut builder = reqwest::ClientBuilder::new()
+                              // DNS IPv4 Only: This stops the 5-second DNS hang on Android
+                              .ip_strategy(reqwest::dns::IpStrategy::Ipv4Only)
                               .local_address(std::net::IpAddr::V4(std::net::Ipv4Addr::UNSPECIFIED))
                               .connect_timeout(std::time::Duration::from_secs(15))
                               .tcp_nodelay(true);
@@ -134,10 +136,10 @@ jobs:
           "
 
           # ── Patch 3: Change version number for verification ──
-          sed -i 's/^version = \"0.9.10\"/version = \"0.9.10-ipv4-patch-v2\"/' Cargo.toml
-          echo \"Updated version to 0.9.10-ipv4-patch-v2\"
+          find . -name "Cargo.toml" -exec sed -i 's/^version = \"0.9.10\"/version = \"0.9.10-ipv4-v3\"/g' {} +
+          echo \"Updated all versions to 0.9.10-ipv4-v3\"
           
-          head -30 crates/agents/src/lib.rs
+          head -35 crates/agents/src/lib.rs
 
       - name: Install cross
         uses: taiki-e/install-action@cross
