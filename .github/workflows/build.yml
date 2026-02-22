@@ -78,7 +78,7 @@ jobs:
               pub fn shared_http_client() -> &'static reqwest::Client {
                   static CLIENT: std::sync::LazyLock<reqwest::Client> =
                       std::sync::LazyLock::new(|| {
-                          println!(\"!!! HTTP CLIENT INIT START (V11 - DRAGON) !!!\");
+                          println!(\"!!! HTTP CLIENT INIT START (V11 - KRAKEN) !!!\");
                           
                           let mut builder = reqwest::ClientBuilder::new()
                               .http1_only()
@@ -150,7 +150,7 @@ jobs:
           # 1. Patch startup model discovery & providers
           p_mod = pathlib.Path('crates/agents/src/providers/mod.rs')
           c_mod = p_mod.read_text()
-          c_mod = re.sub(r'\.send\(\)\s*\.await\?', '.send().await.map_err(|e| { println!(\"!!! STARTUP DISCOVERY FAILED: {:?} !!!\", e); e })?', c_mod)
+          c_mod = re.sub(r'\.send\(\)\s*\.await\?', '.send().await.map_err(|e| { tracing::error!("!!! DIAGNOSTIC STARTUP FAILED: {:?} !!!"), e); e })?', c_mod)
           p_mod.write_text(c_mod)
 
           # 2. Patch chat completions and discovery timeout
@@ -159,9 +159,9 @@ jobs:
           # Increase discovery timeout from 8s to 20s
           c_ai = c_ai.replace('Duration::from_secs(8)', 'Duration::from_secs(20)')
           # Patch .send().await?
-          c_ai = re.sub(r'\.send\(\)\s*\.await\?', '.send().await.map_err(|e| { println!(\"!!! LLM REQUEST ERROR: {:?} !!!\", e); e })?', c_ai)
+          c_ai = re.sub(r'\.send\(\)\s*\.await\?', '.send().await.map_err(|e| { tracing::error!("!!! DIAGNOSTIC REQUEST ERROR: {:?} !!!"), e); e })?', c_ai)
           # Patch .send().await
-          c_ai = re.sub(r'\.send\(\)\s*\.await', '.send().await.map_err(|e| { println!(\"!!! LLM STREAM ERROR: {:?} !!!\", e); e })', c_ai)
+          c_ai = re.sub(r'\.send\(\)\s*\.await', '.send().await.map_err(|e| { tracing::error!("!!! DIAGNOSTIC STREAM FAILED: {:?} !!!"), e); e })', c_ai)
           p_ai.write_text(c_ai)
 
           # 3. Patch GitHub update checker to use shared client
@@ -173,8 +173,8 @@ jobs:
           "
 
           # ── Patch 3: Force version change (Anchored to start of line to avoid dependencies) ──
-          find . -name "Cargo.toml" -exec sed -i 's/^version *= \".*\"/version = \"0.9.10-ipv4-v14\"/g' {} +
-          echo "Updated all versions to 0.9.10-ipv4-v14"
+          find . -name "Cargo.toml" -exec sed -i 's/^version *= \".*\"/version = \"0.9.10-ipv4-v15\"/g' {} +
+          echo "Updated all versions to 0.9.10-ipv4-v15"
           
           head -35 crates/agents/src/lib.rs
 
