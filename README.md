@@ -98,7 +98,7 @@ ssh -p 443 termux@<YOUR_PHONE_IP>
 ```
 
 ## 🧠 Why Native?
-Most Android "Linux" setups use **Proot/Ubuntu** which wastes 2GB of space and adds lag. This repository uses **Static Musl Binaries** built via Zig for raw, native speed.
+Most Android "Linux" setups use **Proot/Ubuntu** which wastes 2GB of space and adds lag. This repository leverages native **Android NDK (Bionic)** builds for raw, native speed and full compatibility with the Android networking stack.
 
 ## ⚠️ Troubleshooting
 

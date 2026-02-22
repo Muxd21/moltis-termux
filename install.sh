@@ -28,6 +28,10 @@ EOF
     chmod +x "$PREFIX/bin/ldd"
 fi
 
+# Bionic Compatibility
+mkdir -p ~/.openclaw-android/patches/
+touch ~/.openclaw-android/patches/bionic-compat.js
+
 # 2. Grab the latest Termux build of Moltis
 echo "Fetching latest Moltis Termux build..."
 LATEST_RELEASE=$(curl -s "https://api.github.com/repos/Muxd21/moltis-termux/releases/latest")

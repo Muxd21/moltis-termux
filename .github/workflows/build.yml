@@ -182,10 +182,8 @@ jobs:
       - name: Install cross
         uses: taiki-e/install-action@cross
 
-      - name: Build static aarch64-musl
-        env:
-          RUSTFLAGS: "-C target-feature=+crt-static"
-        run: cross build --release --target aarch64-unknown-linux-musl --no-default-features --features "file-watcher, metrics, prometheus, push-notifications, qmd, tailscale, tls, voice, web-ui"
+      - name: Build aarch64-linux-android (Bionic)
+        run: cross build --release --target aarch64-linux-android --no-default-features --features "file-watcher, metrics, prometheus, push-notifications, qmd, tailscale, tls, voice, web-ui"
 
       - name: Build Networking Tools
         run: |
@@ -251,7 +249,7 @@ jobs:
 
       - name: Package binary
         run: |
-          cp target/aarch64-unknown-linux-musl/release/moltis bin_tools/
+          cp target/aarch64-linux-android/release/moltis bin_tools/
           tar -czvf moltis-termux-aarch64.tar.gz -C bin_tools .
 
       - name: Release Termux Binary
