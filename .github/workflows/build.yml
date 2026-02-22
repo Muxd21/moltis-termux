@@ -65,13 +65,12 @@ jobs:
             next
           }1' crates/config/src/loader.rs > tmp.rs && mv tmp.rs crates/config/src/loader.rs
 
-          # ── Patch 2: Overwrite shared_http_client with IPv4 manual resolution ──
+          # ── Patch 2: Overwrite shared_http_client with Hardcoded IP Bypass ──
           python3 -c "
           import pathlib, textwrap
           pathlib.Path('crates/agents/src/lib.rs').write_text(textwrap.dedent('''
               //! LLM agent runtime: model selection, prompt building, tool execution, streaming.
               #![cfg_attr(feature = \"local-llm\", allow(unsafe_code))]
-              use std::net::ToSocketAddrs;
 
               pub mod auth_profiles;
 
@@ -79,23 +78,34 @@ jobs:
               pub fn shared_http_client() -> &'static reqwest::Client {
                   static CLIENT: std::sync::LazyLock<reqwest::Client> =
                       std::sync::LazyLock::new(|| {
-                          println!(\"!!! HTTP CLIENT INIT START (V5.1) !!!\");
+                          println!(\"!!! HTTP CLIENT INIT START (V6 - DNS BYPASS) !!!\");
                           
                           let mut builder = reqwest::ClientBuilder::new()
                               .local_address(std::net::IpAddr::V4(std::net::Ipv4Addr::UNSPECIFIED))
                               .connect_timeout(std::time::Duration::from_secs(15))
                               .tcp_nodelay(true);
 
-                          // Bypassing broken IPv6 DNS lookup by pre-resolving known domains to IPv4
-                          let domains = [\"openrouter.ai\", \"api.github.com\", \"api.cerebras.ai\", \"api.groq.com\"];
-                          for domain in domains {
-                              if let Ok(addrs) = (domain, 443).to_socket_addrs() {
-                                  for addr in addrs {
-                                      if addr.is_ipv4() {
-                                          println!(\"!!! HTTP CLIENT: Resolved {} to IPv4 {} !!!\", domain, addr);
-                                          builder = builder.resolve(domain, addr);
-                                      }
-                                  }
+                          // Cloudflare IPs for OpenRouter (Force bypass broken system DNS)
+                          let openrouter_ips = [\"104.21.79.160\", \"172.67.13.195\"];
+                          for ip in openrouter_ips {
+                              if let Ok(addr) = ip.parse::<std::net::IpAddr>() {
+                                  builder = builder.resolve(\"openrouter.ai\", std::net::SocketAddr::new(addr, 443));
+                              }
+                          }
+                          
+                          // Cerebras IPs
+                          let cerebras_ips = [\"104.18.37.159\", \"172.64.150.11\"];
+                          for ip in cerebras_ips {
+                              if let Ok(addr) = ip.parse::<std::net::IpAddr>() {
+                                  builder = builder.resolve(\"api.cerebras.ai\", std::net::SocketAddr::new(addr, 443));
+                              }
+                          }
+
+                          // Groq IPs
+                          let groq_ips = [\"104.18.1.151\", \"104.18.0.151\"];
+                          for ip in groq_ips {
+                              if let Ok(addr) = ip.parse::<std::net::IpAddr>() {
+                                  builder = builder.resolve(\"api.groq.com\", std::net::SocketAddr::new(addr, 443));
                               }
                           }
 
@@ -116,7 +126,7 @@ jobs:
                               println!(\"!!! HTTP CLIENT BUILD ERROR: {} !!!\", e);
                               reqwest::Client::new()
                           });
-                          println!(\"!!! HTTP CLIENT INIT COMPLETE !!!\");
+                          println!(\"!!! HTTP CLIENT INIT COMPLETE (DNS BYPASSED) !!!\");
                           client
                       });
                   &CLIENT
@@ -139,8 +149,8 @@ jobs:
           "
 
           # ── Patch 3: Force version change in all Cargo.tomls ──
-          find . -name "Cargo.toml" -exec sed -i 's/^version = \"0.9.10\"/version = \"0.9.10-ipv4-v5\"/g' {} +
-          echo "Updated all versions to 0.9.10-ipv4-v5"
+          find . -name "Cargo.toml" -exec sed -i 's/^version = \".*\"/version = \"0.9.10-ipv4-v6\"/g' {} +
+          echo "Updated all versions to 0.9.10-ipv4-v6"
           
           head -35 crates/agents/src/lib.rs
 
