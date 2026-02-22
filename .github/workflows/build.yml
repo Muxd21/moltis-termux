@@ -80,8 +80,8 @@ jobs:
               pub fn shared_http_client() -> &'static reqwest::Client {
                   static CLIENT: std::sync::LazyLock<reqwest::Client> =
                       std::sync::LazyLock::new(|| {
-                          // Log initialization so we can verify the patch is active
-                          println!(\"00:00:00 AM.000 INFO moltis_agents: IPv4-forced HTTP client initialized\");
+                          // VERY OBVIOUS LOG FOR VERIFICATION
+                          println!(\"!!! PATCH ACTIVE: FORCING IPv4 AND LOADING TERMUX CERTS !!!\");
                           
                           let mut builder = reqwest::ClientBuilder::new()
                               .local_address(std::net::IpAddr::V4(std::net::Ipv4Addr::UNSPECIFIED))
@@ -120,6 +120,11 @@ jobs:
           ''').lstrip())
           print('Patched lib.rs')
           "
+
+          # ── Patch 3: Change version number for verification ──
+          sed -i 's/^version = \"0.9.10\"/version = \"0.9.10-ipv4-patch\"/' Cargo.toml
+          echo \"Updated version to 0.9.10-ipv4-patch\"
+          
           head -25 crates/agents/src/lib.rs
 
       - name: Install cross
