@@ -78,15 +78,15 @@ jobs:
               pub fn shared_http_client() -> &'static reqwest::Client {
                   static CLIENT: std::sync::LazyLock<reqwest::Client> =
                       std::sync::LazyLock::new(|| {
-                          println!(\"!!! HTTP CLIENT INIT START (V8 - FINAL BOSS) !!!\");
+                          println!(\"!!! HTTP CLIENT INIT START (V9 - VACUUM) !!!\");
                           
                           let mut builder = reqwest::ClientBuilder::new()
-                              // 1. Force HTTP/1.1 only (Bypasses MTU issues with HTTP/2 on mobile/VPN)
                               .http1_only()
-                              // 2. Add standard User-Agent (Bypasses some Cloudflare bot filters)
+                              .no_proxy()
+                              .danger_accept_invalid_certs(true)
                               .user_agent(\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\")
                               .local_address(std::net::IpAddr::V4(std::net::Ipv4Addr::UNSPECIFIED))
-                              .connect_timeout(std::time::Duration::from_secs(15))
+                              .connect_timeout(std::time::Duration::from_secs(25))
                               .tcp_nodelay(true);
 
                           // Hardcoded IPs for critical domains (Total DNS Bypass)
@@ -123,7 +123,7 @@ jobs:
                               println!(\"!!! HTTP CLIENT BUILD ERROR: {} !!!\", e);
                               reqwest::Client::new()
                           });
-                          println!(\"!!! HTTP CLIENT INIT COMPLETE (V8 - STABLE) !!!\");
+                          println!(\"!!! HTTP CLIENT INIT COMPLETE (V9 - STABLE) !!!\");
                           client
                       });
                   &CLIENT
@@ -145,9 +145,18 @@ jobs:
           ''').lstrip())
           "
 
-          # ── Patch 3: Force version change in all Cargo.tomls ──
-          find . -name "Cargo.toml" -exec sed -i 's/^version = \".*\"/version = \"0.9.10-ipv4-v8\"/g' {} +
-          echo "Updated all versions to 0.9.10-ipv4-v8"
+          # -- Patch 2b: Add direct error printing in openai.rs --
+          python3 -c "
+          import pathlib
+          p = pathlib.Path('crates/agents/src/providers/openai.rs')
+          c = p.read_text()
+          c = c.replace('.send().await?;', '.send().await.map_err(|e| { println!(\"!!! LLM REQUEST FAILED: {:?} !!!\", e); e })?;')
+          p.write_text(c)
+          "
+
+          # ── Patch 3: Force version change in all Cargo.tomls (Catches indented workspace versions) ──
+          find . -name "Cargo.toml" -exec sed -i 's/version = \".*\"/version = \"0.9.10-ipv4-v9\"/g' {} +
+          echo "Updated all versions to 0.9.10-ipv4-v9"
           
           head -35 crates/agents/src/lib.rs
 
