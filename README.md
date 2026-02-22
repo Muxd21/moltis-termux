@@ -97,8 +97,14 @@ Stay connected even on hotel or office networks that block SSH.
 ssh -p 443 termux@<YOUR_PHONE_IP>
 ```
 
-## 🧠 Why Native?
-Most Android "Linux" setups use **Proot/Ubuntu** which wastes 2GB of space and adds lag. This repository leverages native **Android NDK (Bionic)** builds for raw, native speed and full compatibility with the Android networking stack.
+## 🧠 The Bionic Breakthrough (Why Native?)
+
+Most Android "Linux" setups use **Proot/Ubuntu**, which wastes 2GB of space and adds emulation lag. Initial attempts to bypass this used **Static Musl** binaries, but this created a "Static Wall"—the binaries bypassed the Android OS socket broker, causing DNS and Network Timeouts on VPNs like Tailscale.
+
+**The Solution:** This repository leverages true native **Android NDK (Bionic)** target architecture. By compiling directly against Android's C Runtime and utilizing careful C-shims, our binary seamlessly meshes with the Android kernel's routing tables. The result? 
+- **Zero Proot Overhead** (~20mb total size)
+- **Native Android Routing** (Perfect compatibility with Tailscale MagicDNS and Android VPN APIs)
+- **Maximum Speed** (Direct hardware execution)
 
 ## ⚠️ Troubleshooting
 

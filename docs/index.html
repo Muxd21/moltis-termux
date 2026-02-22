@@ -309,27 +309,29 @@
         </section>
 
         <section>
-            <h2>The Solution: Static Musl</h2>
+            <h2>The Breakthrough: Android NDK (Bionic)</h2>
             <div class="card">
-                <p>To solve the compatibility barrier, we pivoted to an <span
-                        class="highlight">aarch64-unknown-linux-musl</span> target. Unlike standard builds, Musl allows
-                    for a <strong>fully static binary</strong>.</p>
-                <p>By forcing the C Runtime into the binary itself (<code>target-feature=+crt-static</code>), we
-                    produced a standalone executable that carries its own dependencies. It doesn't care about Android's
-                    lack of Glibc—it just runs.</p>
+                <p>Early iterations of this project relied on <span class="highlight">Static Musl</span> binaries to
+                    bypass Android's lack of Glibc. However, this created a "Static Wall"—the binary bypassed the
+                    Android OS socket-brokering system (VpnService), entirely breaking network requests when using
+                    Tailscale or Cloudflare.</p>
+                <p>The ultimate solution required integrating directly with Android's native C Runtime: <span
+                        class="highlight">Bionic</span>. By utilizing modern cross-compilation toolchains
+                    (<code>cargo-ndk</code>) and custom C-shims, we produced a binary that natively taps into Android's
+                    internal DNS resolver and network routing tables.</p>
 
                 <div class="tech-grid">
                     <div class="tech-item">
-                        <h3>Static CRT</h3>
-                        <p>No external dynamic linkers required. Truly portable.</p>
+                        <h3>Native Routing</h3>
+                        <p>Perfect compatibility with Android's VPN API. Tailscale MagicDNS works flawlessly.</p>
                     </div>
                     <div class="tech-item">
                         <h3>Zero Proot</h3>
-                        <p>Uses ~20MB of storage instead of 2GB for Ubuntu.</p>
+                        <p>Uses ~20MB of storage instead of 2GB for Ubuntu. Just raw Android execution.</p>
                     </div>
                     <div class="tech-item">
-                        <h3>Native Speed</h3>
-                        <p>Direct syscalls to the Android kernel. Zero latency overhead.</p>
+                        <h3>Bionic Syscalls</h3>
+                        <p>Direct communication with the Android kernel. Zero latency overhead and maximum speed.</p>
                     </div>
                 </div>
             </div>
