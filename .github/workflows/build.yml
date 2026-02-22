@@ -78,11 +78,11 @@ jobs:
               pub fn shared_http_client() -> &'static reqwest::Client {
                   static CLIENT: std::sync::LazyLock<reqwest::Client> =
                       std::sync::LazyLock::new(|| {
-                          println!(\"!!! HTTP CLIENT INIT START (V7 - FULL BYPASS) !!!\");
+                          println!(\"!!! HTTP CLIENT INIT START (V8 - FINAL BOSS) !!!\");
                           
                           let mut builder = reqwest::ClientBuilder::new()
                               // 1. Force HTTP/1.1 only (Bypasses MTU issues with HTTP/2 on mobile/VPN)
-                              .version(reqwest::Version::HTTP_11)
+                              .http1_only()
                               // 2. Add standard User-Agent (Bypasses some Cloudflare bot filters)
                               .user_agent(\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\")
                               .local_address(std::net::IpAddr::V4(std::net::Ipv4Addr::UNSPECIFIED))
@@ -123,7 +123,7 @@ jobs:
                               println!(\"!!! HTTP CLIENT BUILD ERROR: {} !!!\", e);
                               reqwest::Client::new()
                           });
-                          println!(\"!!! HTTP CLIENT INIT COMPLETE (V7 - ULTRA) !!!\");
+                          println!(\"!!! HTTP CLIENT INIT COMPLETE (V8 - STABLE) !!!\");
                           client
                       });
                   &CLIENT
@@ -146,8 +146,8 @@ jobs:
           "
 
           # ── Patch 3: Force version change in all Cargo.tomls ──
-          find . -name "Cargo.toml" -exec sed -i 's/^version = \".*\"/version = \"0.9.10-ipv4-v7\"/g' {} +
-          echo "Updated all versions to 0.9.10-ipv4-v7"
+          find . -name "Cargo.toml" -exec sed -i 's/^version = \".*\"/version = \"0.9.10-ipv4-v8\"/g' {} +
+          echo "Updated all versions to 0.9.10-ipv4-v8"
           
           head -35 crates/agents/src/lib.rs
 
