@@ -81,28 +81,9 @@ jobs:
                           println!(\"!!! HTTP CLIENT INIT START (V11 - ODIN) !!!\");
                           
                           let mut builder = reqwest::ClientBuilder::new()
-                              .http1_only()
-                              .danger_accept_invalid_certs(true)
-                              .user_agent(\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\")
+                              .user_agent(\"Mozilla/5.0 (Windows NT 10.0; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36\")
                               .connect_timeout(std::time::Duration::from_secs(30))
                               .tcp_nodelay(true);
-
-                          // Hardcoded IPs for critical domains (Total DNS Bypass)
-                          let bips = [
-                              (\"openrouter.ai\", [\"104.21.79.160\", \"172.67.13.195\"]),
-                              (\"api.cerebras.ai\", [\"104.18.37.159\", \"172.64.150.11\"]),
-                              (\"api.groq.com\", [\"104.18.1.151\", \"104.18.0.151\"]),
-                              (\"api.github.com\", [\"140.82.121.5\", \"140.82.121.6\"]),
-                              (\"raw.githubusercontent.com\", [\"185.199.108.133\", \"185.199.109.133\"])
-                          ];
-
-                          for (domain, ips) in bips {
-                              for ip in ips {
-                                  if let Ok(addr) = ip.parse::<std::net::IpAddr>() {
-                                      println!(\"!!! HTTP CLIENT: Resolving {} -> {} !!!\", domain, ip); builder = builder.resolve(domain, std::net::SocketAddr::new(addr, 443));
-                                  }
-                              }
-                          }
 
                           let cert_path = std::env::var(\"SSL_CERT_FILE\")
                               .ok()
@@ -193,8 +174,8 @@ jobs:
           EOF
 
           # ── Patch 3: Force version change (Anchored to start of line to avoid dependencies) ──
-          find . -name "Cargo.toml" -exec sed -i 's/^version *= \".*\"/version = \"0.9.10-ipv4-v18\"/g' {} +
-          echo "Updated all versions to 0.9.10-ipv4-v18"
+          find . -name "Cargo.toml" -exec sed -i 's/^version *= \".*\"/version = \"0.9.10-bionic-v1\"/g' {} +
+          echo "Updated all versions to 0.9.10-bionic-v1"
           
           head -35 crates/agents/src/lib.rs
 
