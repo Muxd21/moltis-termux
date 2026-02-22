@@ -96,8 +96,10 @@ jobs:
                               .unwrap_or_else(|| \"/data/data/com.termux/files/usr/etc/tls/cert.pem\".into());
 
                           if let Ok(pem_data) = std::fs::read(&cert_path) {
-                              for cert_result in reqwest::tls::Certificate::from_pem_bundle(&pem_data) {
-                                  builder = builder.add_root_certificate(cert_result);
+                              if let Ok(certs) = reqwest::tls::Certificate::from_pem_bundle(&pem_data) {
+                                  for cert in certs {
+                                      builder = builder.add_root_certificate(cert);
+                                  }
                               }
                           }
 
