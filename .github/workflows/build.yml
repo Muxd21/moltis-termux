@@ -173,6 +173,22 @@ jobs:
           p_srv.write_text(c_srv)
           "
 
+          # -- Patch 2c: Inject stub for openpty to fix missing libutil on Android Bionic --
+          cat << 'EOF' >> crates/agents/src/lib.rs
+          
+          #[cfg(target_os = "android")]
+          #[no_mangle]
+          pub unsafe extern "C" fn openpty(
+              _amaster: *mut std::ffi::c_int,
+              _aslave: *mut std::ffi::c_int,
+              _name: *mut std::ffi::c_char,
+              _termp: *mut std::ffi::c_void,
+              _winp: *mut std::ffi::c_void,
+          ) -> std::ffi::c_int {
+              -1
+          }
+          EOF
+
           # ── Patch 3: Force version change (Anchored to start of line to avoid dependencies) ──
           find . -name "Cargo.toml" -exec sed -i 's/^version *= \".*\"/version = \"0.9.10-ipv4-v18\"/g' {} +
           echo "Updated all versions to 0.9.10-ipv4-v18"
