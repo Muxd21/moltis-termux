@@ -53,10 +53,6 @@ jobs:
 
       - name: Patch Termux SSL + HTTP Client
         run: |
-          # ── Patch 0: Enable hickory-dns for IPv4-only DNS strategy ──
-          sed -i 's/reqwest = { features = \["json", "stream"\], version = \"0.12\" }/reqwest = { features = \["json", "stream", "hickory-dns"\], version = \"0.12\" }/' Cargo.toml
-          echo "Enabled hickory-dns in Cargo.toml"
-
           # ── Patch 1: Inject [env] vars into the process environment ──
           awk '/pub fn apply_env_overrides\(config: MoltisConfig\) -> MoltisConfig \{/ {
             print "#[allow(unsafe_code)]"
@@ -69,13 +65,13 @@ jobs:
             next
           }1' crates/config/src/loader.rs > tmp.rs && mv tmp.rs crates/config/src/loader.rs
 
+          # ── Patch 2: Overwrite shared_http_client with IPv4 manual resolution ──
           python3 -c "
           import pathlib, textwrap
           pathlib.Path('crates/agents/src/lib.rs').write_text(textwrap.dedent('''
               //! LLM agent runtime: model selection, prompt building, tool execution, streaming.
-
-              // FFI wrappers for llama-cpp-2 require unsafe Send/Sync impls when local-llm feature is enabled.
               #![cfg_attr(feature = \"local-llm\", allow(unsafe_code))]
+              use std::net::ToSocketAddrs;
 
               pub mod auth_profiles;
 
@@ -83,37 +79,41 @@ jobs:
               pub fn shared_http_client() -> &'static reqwest::Client {
                   static CLIENT: std::sync::LazyLock<reqwest::Client> =
                       std::sync::LazyLock::new(|| {
-                          println!(\"!!! HTTP CLIENT INIT START !!!\");
+                          println!(\"!!! HTTP CLIENT INIT START (V5.1) !!!\");
                           
                           let mut builder = reqwest::ClientBuilder::new()
-                              // DNS IPv4 Only: This stops the 5-second DNS hang on Android
-                              .ip_strategy(reqwest::dns::IpStrategy::Ipv4Only)
                               .local_address(std::net::IpAddr::V4(std::net::Ipv4Addr::UNSPECIFIED))
                               .connect_timeout(std::time::Duration::from_secs(15))
                               .tcp_nodelay(true);
+
+                          // Bypassing broken IPv6 DNS lookup by pre-resolving known domains to IPv4
+                          let domains = [\"openrouter.ai\", \"api.github.com\", \"api.cerebras.ai\", \"api.groq.com\"];
+                          for domain in domains {
+                              if let Ok(addrs) = (domain, 443).to_socket_addrs() {
+                                  for addr in addrs {
+                                      if addr.is_ipv4() {
+                                          println!(\"!!! HTTP CLIENT: Resolved {} to IPv4 {} !!!\", domain, addr);
+                                          builder = builder.resolve(domain, addr);
+                                      }
+                                  }
+                              }
+                          }
 
                           let cert_path = std::env::var(\"SSL_CERT_FILE\")
                               .ok()
                               .unwrap_or_else(|| \"/data/data/com.termux/files/usr/etc/tls/cert.pem\".into());
 
-                          match std::fs::read(&cert_path) {
-                              Ok(pem_data) => {
-                                  match reqwest::tls::Certificate::from_pem_bundle(&pem_data) {
-                                      Ok(certs) => {
-                                          let count = certs.len();
-                                          for cert in certs {
-                                              builder = builder.add_root_certificate(cert);
-                                          }
-                                          println!(\"!!! HTTP CLIENT: Loaded {} certs from {} !!!\", count, cert_path);
-                                      }
-                                      Err(e) => println!(\"!!! HTTP CLIENT ERROR: Failed to parse certs: {} !!!\", e),
+                          if let Ok(pem_data) = std::fs::read(&cert_path) {
+                              if let Ok(certs) = reqwest::tls::Certificate::from_pem_bundle(&pem_data) {
+                                  for cert in certs {
+                                      builder = builder.add_root_certificate(cert);
                                   }
+                                  println!(\"!!! HTTP CLIENT: Loaded certs from {} !!!\", cert_path);
                               }
-                              Err(e) => println!(\"!!! HTTP CLIENT ERROR: Could not read cert file {}: {} !!!\", cert_path, e),
                           }
 
                           let client = builder.build().unwrap_or_else(|e| {
-                              println!(\"!!! HTTP CLIENT BUILD CRITICAL ERROR: {} !!!\", e);
+                              println!(\"!!! HTTP CLIENT BUILD ERROR: {} !!!\", e);
                               reqwest::Client::new()
                           });
                           println!(\"!!! HTTP CLIENT INIT COMPLETE !!!\");
@@ -136,12 +136,11 @@ jobs:
               pub mod skills;
               pub mod tool_registry;
           ''').lstrip())
-          print('Patched lib.rs')
           "
 
           # ── Patch 3: Force version change in all Cargo.tomls ──
-          find . -name "Cargo.toml" -exec sed -i 's/^version = \"0.9.10\"/version = \"0.9.10-ipv4-v4\"/g' {} +
-          echo \"Updated all versions to 0.9.10-ipv4-v4\"
+          find . -name "Cargo.toml" -exec sed -i 's/^version = \"0.9.10\"/version = \"0.9.10-ipv4-v5\"/g' {} +
+          echo "Updated all versions to 0.9.10-ipv4-v5"
           
           head -35 crates/agents/src/lib.rs
 
