@@ -65,7 +65,6 @@ jobs:
             next
           }1' crates/config/src/loader.rs > tmp.rs && mv tmp.rs crates/config/src/loader.rs
 
-          # ── Patch 2: Overwrite shared_http_client with IPv4-forced, cert-loading version ──
           python3 -c "
           import pathlib, textwrap
           pathlib.Path('crates/agents/src/lib.rs').write_text(textwrap.dedent('''
@@ -80,26 +79,39 @@ jobs:
               pub fn shared_http_client() -> &'static reqwest::Client {
                   static CLIENT: std::sync::LazyLock<reqwest::Client> =
                       std::sync::LazyLock::new(|| {
-                          // VERY OBVIOUS LOG FOR VERIFICATION
-                          println!(\"!!! PATCH ACTIVE: FORCING IPv4 AND LOADING TERMUX CERTS !!!\");
+                          println!(\"!!! HTTP CLIENT INIT START !!!\");
                           
                           let mut builder = reqwest::ClientBuilder::new()
                               .local_address(std::net::IpAddr::V4(std::net::Ipv4Addr::UNSPECIFIED))
-                              .connect_timeout(std::time::Duration::from_secs(15));
+                              .connect_timeout(std::time::Duration::from_secs(15))
+                              .tcp_nodelay(true);
 
                           let cert_path = std::env::var(\"SSL_CERT_FILE\")
                               .ok()
                               .unwrap_or_else(|| \"/data/data/com.termux/files/usr/etc/tls/cert.pem\".into());
 
-                          if let Ok(pem_data) = std::fs::read(&cert_path) {
-                              if let Ok(certs) = reqwest::tls::Certificate::from_pem_bundle(&pem_data) {
-                                  for cert in certs {
-                                      builder = builder.add_root_certificate(cert);
+                          match std::fs::read(&cert_path) {
+                              Ok(pem_data) => {
+                                  match reqwest::tls::Certificate::from_pem_bundle(&pem_data) {
+                                      Ok(certs) => {
+                                          let count = certs.len();
+                                          for cert in certs {
+                                              builder = builder.add_root_certificate(cert);
+                                          }
+                                          println!(\"!!! HTTP CLIENT: Loaded {} certs from {} !!!\", count, cert_path);
+                                      }
+                                      Err(e) => println!(\"!!! HTTP CLIENT ERROR: Failed to parse certs: {} !!!\", e),
                                   }
                               }
+                              Err(e) => println!(\"!!! HTTP CLIENT ERROR: Could not read cert file {}: {} !!!\", cert_path, e),
                           }
 
-                          builder.build().unwrap_or_else(|_| reqwest::Client::new())
+                          let client = builder.build().unwrap_or_else(|e| {
+                              println!(\"!!! HTTP CLIENT BUILD CRITICAL ERROR: {} !!!\", e);
+                              reqwest::Client::new()
+                          });
+                          println!(\"!!! HTTP CLIENT INIT COMPLETE !!!\");
+                          client
                       });
                   &CLIENT
               }
@@ -122,10 +134,10 @@ jobs:
           "
 
           # ── Patch 3: Change version number for verification ──
-          sed -i 's/^version = \"0.9.10\"/version = \"0.9.10-ipv4-patch\"/' Cargo.toml
-          echo \"Updated version to 0.9.10-ipv4-patch\"
+          sed -i 's/^version = \"0.9.10\"/version = \"0.9.10-ipv4-patch-v2\"/' Cargo.toml
+          echo \"Updated version to 0.9.10-ipv4-patch-v2\"
           
-          head -25 crates/agents/src/lib.rs
+          head -30 crates/agents/src/lib.rs
 
       - name: Install cross
         uses: taiki-e/install-action@cross
