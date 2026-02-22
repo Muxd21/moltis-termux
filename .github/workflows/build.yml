@@ -66,63 +66,63 @@ jobs:
           }1' crates/config/src/loader.rs > tmp.rs && mv tmp.rs crates/config/src/loader.rs
 
           # ── Patch 2: Overwrite shared_http_client with IPv4-forced, cert-loading version ──
-          cat > crates/agents/src/lib.rs << 'RUSTEOF'
-//! LLM agent runtime: model selection, prompt building, tool execution, streaming.
+          python3 -c "
+          import pathlib, textwrap
+          pathlib.Path('crates/agents/src/lib.rs').write_text(textwrap.dedent('''
+              //! LLM agent runtime: model selection, prompt building, tool execution, streaming.
 
-// FFI wrappers for llama-cpp-2 require unsafe Send/Sync impls when local-llm feature is enabled.
-#![cfg_attr(feature = "local-llm", allow(unsafe_code))]
+              // FFI wrappers for llama-cpp-2 require unsafe Send/Sync impls when local-llm feature is enabled.
+              #![cfg_attr(feature = \"local-llm\", allow(unsafe_code))]
 
-pub mod auth_profiles;
+              pub mod auth_profiles;
 
-/// Shared HTTP client for LLM providers.
-///
-/// All providers that don't need custom redirect/proxy settings should
-/// reuse this client to share connection pools, DNS cache, and TLS sessions.
-///
-/// On Termux/Android we:
-/// 1. Force IPv4 to avoid broken IPv6 routing on mobile networks
-/// 2. Explicitly load Termux CA certs since standard paths don't exist
-pub fn shared_http_client() -> &'static reqwest::Client {
-    static CLIENT: std::sync::LazyLock<reqwest::Client> =
-        std::sync::LazyLock::new(|| {
-            let mut builder = reqwest::ClientBuilder::new()
-                // Force IPv4: Android/Termux often has broken IPv6 routing
-                // which causes 5-second TCP timeouts on Cloudflare-backed domains
-                .local_address(std::net::IpAddr::V4(std::net::Ipv4Addr::UNSPECIFIED))
-                .connect_timeout(std::time::Duration::from_secs(15));
+              /// Shared HTTP client for LLM providers.
+              ///
+              /// All providers that don't need custom redirect/proxy settings should
+              /// reuse this client to share connection pools, DNS cache, and TLS sessions.
+              ///
+              /// On Termux/Android we:
+              /// 1. Force IPv4 to avoid broken IPv6 routing on mobile networks
+              /// 2. Explicitly load Termux CA certs since standard paths don't exist
+              pub fn shared_http_client() -> &'static reqwest::Client {
+                  static CLIENT: std::sync::LazyLock<reqwest::Client> =
+                      std::sync::LazyLock::new(|| {
+                          let mut builder = reqwest::ClientBuilder::new()
+                              .local_address(std::net::IpAddr::V4(std::net::Ipv4Addr::UNSPECIFIED))
+                              .connect_timeout(std::time::Duration::from_secs(15));
 
-            // Try to load PEM certs from SSL_CERT_FILE or common Termux path.
-            let cert_path = std::env::var("SSL_CERT_FILE")
-                .ok()
-                .unwrap_or_else(|| "/data/data/com.termux/files/usr/etc/tls/cert.pem".into());
+                          let cert_path = std::env::var(\"SSL_CERT_FILE\")
+                              .ok()
+                              .unwrap_or_else(|| \"/data/data/com.termux/files/usr/etc/tls/cert.pem\".into());
 
-            if let Ok(pem_data) = std::fs::read(&cert_path) {
-                for cert_result in reqwest::tls::Certificate::from_pem_bundle(&pem_data) {
-                    builder = builder.add_root_certificate(cert_result);
-                }
-            }
+                          if let Ok(pem_data) = std::fs::read(&cert_path) {
+                              for cert_result in reqwest::tls::Certificate::from_pem_bundle(&pem_data) {
+                                  builder = builder.add_root_certificate(cert_result);
+                              }
+                          }
 
-            builder.build().unwrap_or_else(|_| reqwest::Client::new())
-        });
-    &CLIENT
-}
-pub mod memory_writer;
-pub mod model;
-pub mod multimodal;
-pub mod prompt;
-pub mod providers;
-pub mod runner;
-pub use {
-    model::{ChatMessage, ContentPart, UserContent},
-    runner::AgentRunError,
-};
-pub mod provider_chain;
-pub mod silent_turn;
-pub mod skills;
-pub mod tool_registry;
-RUSTEOF
-          echo "Patched lib.rs with IPv4-forced shared_http_client"
-          cat crates/agents/src/lib.rs | head -20
+                          builder.build().unwrap_or_else(|_| reqwest::Client::new())
+                      });
+                  &CLIENT
+              }
+              pub mod memory_writer;
+              pub mod model;
+              pub mod multimodal;
+              pub mod prompt;
+              pub mod providers;
+              pub mod runner;
+              pub use {
+                  model::{ChatMessage, ContentPart, UserContent},
+                  runner::AgentRunError,
+              };
+              pub mod provider_chain;
+              pub mod silent_turn;
+              pub mod skills;
+              pub mod tool_registry;
+          ''').lstrip())
+          print('Patched lib.rs')
+          "
+          head -20 crates/agents/src/lib.rs
 
       - name: Install cross
         uses: taiki-e/install-action@cross
