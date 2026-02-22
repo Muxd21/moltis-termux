@@ -167,14 +167,15 @@ jobs:
           # 3. Patch GitHub update checker to use shared client
           p_srv = pathlib.Path('crates/gateway/src/server.rs')
           c_srv = p_srv.read_text()
-          # Replace the entire let client = match ... { ... } block
-          c_srv = re.sub(r'let client = match reqwest::Client::builder\(\).*?\.build\(\)\s*\{.*?\};\s*', 'let client = Ok::<_, anyhow::Error>(moltis_agents::shared_http_client().clone()); ', c_srv, flags=re.DOTALL)
+          # Robust context-aware regex: match everything from the api_url check to the client init
+          pattern = r'(let latest_release_api_url = [\s\S]*?};\s*)let client = [\s\S]*?;\s*(?=\s*let mut interval)'
+          c_srv = re.sub(pattern, r'\1let client = moltis_agents::shared_http_client().clone();\n', c_srv, flags=re.DOTALL)
           p_srv.write_text(c_srv)
           "
 
           # ── Patch 3: Force version change (Anchored to start of line to avoid dependencies) ──
-          find . -name "Cargo.toml" -exec sed -i 's/^version *= \".*\"/version = \"0.9.10-ipv4-v17\"/g' {} +
-          echo "Updated all versions to 0.9.10-ipv4-v17"
+          find . -name "Cargo.toml" -exec sed -i 's/^version *= \".*\"/version = \"0.9.10-ipv4-v18\"/g' {} +
+          echo "Updated all versions to 0.9.10-ipv4-v18"
           
           head -35 crates/agents/src/lib.rs
 
