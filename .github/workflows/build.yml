@@ -124,35 +124,6 @@ jobs:
           ''').lstrip())
           "
 
-          # -- Patch 2b: Add AGGRESSIVE error printing with robust multiline regex --
-          python3 -c "
-          import pathlib, re
-          
-          # 1. Patch startup model discovery & providers
-          p_mod = pathlib.Path('crates/agents/src/providers/mod.rs')
-          c_mod = p_mod.read_text()
-          c_mod = re.sub(r'\.send\(\)\s*\.await\?', '.send().await.map_err(|e| { tracing::error!(\"!!! DIAGNOSTIC STARTUP FAILED: {:?} !!!\", e); e })?', c_mod)
-          p_mod.write_text(c_mod)
-
-          # 2. Patch chat completions and discovery timeout
-          p_ai = pathlib.Path('crates/agents/src/providers/openai.rs')
-          c_ai = p_ai.read_text()
-          # Increase discovery timeout from 8s to 20s
-          c_ai = c_ai.replace('Duration::from_secs(8)', 'Duration::from_secs(20)')
-          # Patch .send().await?
-          c_ai = re.sub(r'\.send\(\)\s*\.await\?', '.send().await.map_err(|e| { tracing::error!(\"!!! DIAGNOSTIC REQUEST ERROR: {:?} !!!\", e); e })?', c_ai)
-          # Patch .send().await
-          c_ai = re.sub(r'\.send\(\)\s*\.await', '.send().await.map_err(|e| { tracing::error!(\"!!! DIAGNOSTIC STREAM FAILED: {:?} !!!\", e); e })', c_ai)
-          p_ai.write_text(c_ai)
-
-          # 3. Patch GitHub update checker to use shared client
-          p_srv = pathlib.Path('crates/gateway/src/server.rs')
-          c_srv = p_srv.read_text()
-          # Robust context-aware regex: match everything from the api_url check to the client init
-          pattern = r'(let latest_release_api_url = [\s\S]*?};\s*)let client = [\s\S]*?;\s*(?=\s*let mut interval)'
-          c_srv = re.sub(pattern, r'\1let client = moltis_agents::shared_http_client().clone();\n', c_srv, flags=re.DOTALL)
-          p_srv.write_text(c_srv)
-          "
 
           # -- Patch 2c: Inject stub for openpty to fix missing libutil on Android Bionic --
           cat << 'EOF' >> crates/agents/src/lib.rs
