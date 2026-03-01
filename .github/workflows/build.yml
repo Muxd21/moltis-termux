@@ -251,9 +251,12 @@ jobs:
           }
           EOF
 
-          # ── Patch 5: Force version change ──
-          find . -name "Cargo.toml" -exec sed -i 's/^version *= \".*\"/version = \"0.9.10-bionic-v2\"/g' {} +
-          echo "Updated all versions to 0.9.10-bionic-v2 and configured Bionic patches."
+          # ── Patch 5: Force version change (Dynamic) ──
+          VERSION_RAW="${{ needs.check-version.outputs.target_version }}"
+          VERSION_CLEAN=${VERSION_RAW#v}
+          NEW_VERSION="${VERSION_CLEAN}-bionic-v2"
+          find . -name "Cargo.toml" -exec sed -i "s/^version *= \".*\"/version = \"$NEW_VERSION\"/g" {} +
+          echo "Updated all versions to $NEW_VERSION and configured Bionic patches."
 
       - name: Install cargo-ndk
         uses: taiki-e/install-action@v2
