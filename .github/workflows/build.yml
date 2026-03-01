@@ -80,6 +80,11 @@ jobs:
           # 3. Cleanup: remove orphaned commas and fix empty lists to ensure valid TOML.
           find . -name "Cargo.toml" -exec sed -i 's/\[,/\[/g; s/,,/,/g; s/,]/]/g' {} +
           
+          # 4. Explicitly disable wasm feature in moltis-tools to avoid missing .wasm errors
+          sed -i 's/"wasm"//g' crates/tools/Cargo.toml
+          # Cleanup list in tools Cargo.toml
+          sed -i 's/\[,/\[/g; s/,,/,/g; s/,]/]/g' crates/tools/Cargo.toml
+          
           # ── Patch 3: Overwrite shared_http_client with Hardcoded IP Bypass & HTTP/1.1 ──
           python3 -c "
           import pathlib, textwrap
@@ -139,7 +144,7 @@ jobs:
           ''').lstrip())
           "
 
-          # -- Patch 4: Inject stub for openpty to fix missing libutil on Android Bionic --
+          # -- Patch 4: Inject stubs for openpty/forkpty to fix missing libutil on Android Bionic --
           cat << 'EOF' >> crates/agents/src/lib.rs
           
           #[cfg(target_os = "android")]
@@ -153,6 +158,21 @@ jobs:
                   _termp: *mut std::ffi::c_void,
                   _winp: *mut std::ffi::c_void,
               ) -> std::ffi::c_int {
+                  -1
+              }
+
+              #[unsafe(no_mangle)]
+              pub unsafe extern "C" fn forkpty(
+                  _amaster: *mut std::ffi::c_int,
+                  _name: *mut std::ffi::c_char,
+                  _termp: *mut std::ffi::c_void,
+                  _winp: *mut std::ffi::c_void,
+              ) -> std::ffi::c_int {
+                  -1
+              }
+
+              #[unsafe(no_mangle)]
+              pub unsafe extern "C" fn login_tty(_fd: std::ffi::c_int) -> std::ffi::c_int {
                   -1
               }
           }
