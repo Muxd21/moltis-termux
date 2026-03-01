@@ -144,36 +144,102 @@ jobs:
           ''').lstrip())
           "
 
-          # -- Patch 4: Inject stubs for openpty/forkpty to fix missing libutil on Android Bionic --
+          # -- Patch 4: Inject working PTY shim for Android Bionic and acknowledge Antigravity fork --
           cat << 'EOF' >> crates/agents/src/lib.rs
           
           #[cfg(target_os = "android")]
           #[allow(unsafe_code)]
           pub mod android_bionic_shim {
+              use std::ffi::{c_int, c_char, c_void};
+
+              extern "C" {
+                  fn posix_openpt(flags: c_int) -> c_int;
+                  fn grantpt(fd: c_int) -> c_int;
+                  fn unlockpt(fd: c_int) -> c_int;
+                  fn ptsname_r(fd: c_int, buf: *mut c_char, buflen: usize) -> c_int;
+                  fn open(path: *const c_char, flags: c_int, ...) -> c_int;
+                  fn close(fd: c_int) -> c_int;
+                  fn strcpy(dest: *mut c_char, src: *const c_char) -> *mut c_char;
+                  fn fork() -> i32;
+                  fn setsid() -> i32;
+                  fn ioctl(fd: c_int, request: usize, ...) -> c_int;
+                  fn dup2(oldfd: c_int, newfd: c_int) -> c_int;
+              }
+
+              const O_RDWR: c_int = 2;
+              const O_NOCTTY: c_int = 0x400;
+              const TIOCSCTTY: usize = 0x540E;
+
               #[unsafe(no_mangle)]
               pub unsafe extern "C" fn openpty(
-                  _amaster: *mut std::ffi::c_int,
-                  _aslave: *mut std::ffi::c_int,
-                  _name: *mut std::ffi::c_char,
-                  _termp: *mut std::ffi::c_void,
-                  _winp: *mut std::ffi::c_void,
-              ) -> std::ffi::c_int {
-                  -1
+                  amaster: *mut c_int,
+                  aslave: *mut c_int,
+                  name: *mut c_char,
+                  _termp: *mut c_void,
+                  _winp: *mut c_void,
+              ) -> c_int {
+                  println!("!!! PTY INIT: [Antigravity PTY Shim] Initializing for Android Bionic !!!");
+                  let master = posix_openpt(O_RDWR | O_NOCTTY);
+                  if master < 0 { return -1; }
+                  if grantpt(master) < 0 || unlockpt(master) < 0 {
+                      close(master);
+                      return -1;
+                  }
+                  let mut buf = [0u8; 1024];
+                  if ptsname_r(master, buf.as_mut_ptr() as *mut _, buf.len()) != 0 {
+                      close(master);
+                      return -1;
+                  }
+                  let slave = open(buf.as_ptr() as *const _, O_RDWR | O_NOCTTY);
+                  if slave < 0 {
+                      close(master);
+                      return -1;
+                  }
+                  if !name.is_null() {
+                      strcpy(name, buf.as_ptr() as *const _);
+                  }
+                  *amaster = master;
+                  *aslave = slave;
+                  0
               }
 
               #[unsafe(no_mangle)]
               pub unsafe extern "C" fn forkpty(
-                  _amaster: *mut std::ffi::c_int,
-                  _name: *mut std::ffi::c_char,
-                  _termp: *mut std::ffi::c_void,
-                  _winp: *mut std::ffi::c_void,
-              ) -> std::ffi::c_int {
-                  -1
+                  amaster: *mut c_int,
+                  name: *mut c_char,
+                  termp: *mut c_void,
+                  winp: *mut c_void,
+              ) -> c_int {
+                  let mut master = 0;
+                  let mut slave = 0;
+                  if openpty(&mut master, &mut slave, name, termp, winp) < 0 {
+                      return -1;
+                  }
+                  let pid = fork();
+                  if pid < 0 {
+                      close(master);
+                      close(slave);
+                      return -1;
+                  }
+                  if pid == 0 {
+                      close(master);
+                      login_tty(slave);
+                      return 0;
+                  }
+                  close(slave);
+                  *amaster = master;
+                  pid
               }
 
               #[unsafe(no_mangle)]
-              pub unsafe extern "C" fn login_tty(_fd: std::ffi::c_int) -> std::ffi::c_int {
-                  -1
+              pub unsafe extern "C" fn login_tty(fd: c_int) -> c_int {
+                  setsid();
+                  ioctl(fd, TIOCSCTTY, 0);
+                  dup2(fd, 0);
+                  dup2(fd, 1);
+                  dup2(fd, 2);
+                  if fd > 2 { close(fd); }
+                  0
               }
           }
           EOF
