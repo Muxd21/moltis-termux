@@ -81,7 +81,9 @@ jobs:
           find . -name "Cargo.toml" -exec sed -i 's/\[,/\[/g; s/,,/,/g; s/,]/]/g' {} +
           
           # 4. Explicitly disable wasm feature in moltis-tools to avoid missing .wasm errors
-          sed -i 's/"wasm"//g' crates/tools/Cargo.toml
+          # Remove the 'wasm' from default features and the 'wasm =' line entirely
+          sed -i 's/"wasm",*//g' crates/tools/Cargo.toml
+          sed -i '/^wasm[[:space:]]*=/d' crates/tools/Cargo.toml
           # Cleanup list in tools Cargo.toml
           sed -i 's/\[,/\[/g; s/,,/,/g; s/,]/]/g' crates/tools/Cargo.toml
           
