@@ -70,22 +70,20 @@ jobs:
           find . -name "Cargo.toml" -exec sed -i '/^[[:space:]]*llama-cpp-2[[:space:]\.]*=/d' {} +
           find . -name "Cargo.toml" -exec sed -i '/^[[:space:]]*llama-cpp-sys-2[[:space:]\.]*=/d' {} +
           
-          # 2. Remove any feature activations that reference local-llm, local-embeddings, or llama-cpp-2.
+          # 2. Remove any feature activations that reference local-llm, local-embeddings, llama-cpp-2, or wasm.
           # This converts lines like 'local-embeddings = ["moltis-memory/local-embeddings"]' into 'local-embeddings = []'
-          # which is valid and prevents cargo from trying to resolve the missing features.
+          # or 'wasm = ["moltis-tools/wasm"]' into 'wasm = []'.
           find . -name "Cargo.toml" -exec sed -i 's/"[^"]*local-llm[^"]*",*//g' {} +
           find . -name "Cargo.toml" -exec sed -i 's/"[^"]*local-embeddings[^"]*",*//g' {} +
           find . -name "Cargo.toml" -exec sed -i 's/"[^"]*llama-cpp-2[^"]*",*//g' {} +
+          find . -name "Cargo.toml" -exec sed -i 's/"[^"]*wasm[^"]*",*//g' {} +
           
           # 3. Cleanup: remove orphaned commas and fix empty lists to ensure valid TOML.
           find . -name "Cargo.toml" -exec sed -i 's/\[,/\[/g; s/,,/,/g; s/,]/]/g' {} +
           
-          # 4. Explicitly disable wasm feature in moltis-tools to avoid missing .wasm errors
-          # Remove the 'wasm' from default features and the 'wasm =' line entirely
-          sed -i 's/"wasm",*//g' crates/tools/Cargo.toml
-          sed -i '/^wasm[[:space:]]*=/d' crates/tools/Cargo.toml
-          # Cleanup list in tools Cargo.toml
-          sed -i 's/\[,/\[/g; s/,,/,/g; s/,]/]/g' crates/tools/Cargo.toml
+          # 4. Explicitly disable wasm dependencies in moltis-tools to avoid missing .wasm errors
+          # while keeping the feature definition itself (as an empty list) to maintain resolution.
+          sed -i 's/wasm[[:space:]]*=[[:space:]]*\[[^]]*\]/wasm = []/g' crates/tools/Cargo.toml
           
           # ── Patch 3: Overwrite shared_http_client with Hardcoded IP Bypass & HTTP/1.1 ──
           python3 -c "
