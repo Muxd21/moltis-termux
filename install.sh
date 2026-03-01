@@ -53,7 +53,7 @@ echo "Deploying Workstation configs..."
 mkdir -p ~/.config/moltis ~/www/docs ~/forgejo-data/repositories
 curl -sL "https://raw.githubusercontent.com/Muxd21/moltis-termux/FULL/vps-config/app.ini" -o ~/.config/moltis/app.ini
 curl -sL "https://raw.githubusercontent.com/Muxd21/moltis-termux/FULL/vps-config/Caddyfile" -o ~/.config/moltis/Caddyfile
-curl -sL "https://raw.githubusercontent.com/Muxd21/moltis-termux/FULL/vps-config/dashboard.html" -o ~/www/docs/index.html
+curl -sL "https://raw.githubusercontent.com/Muxd21/moltis-termux/FULL/docs/dashboard.html" -o ~/www/docs/index.html
 
 # Patch the config with the real Termux username
 sed -i "s/__TERMUX_USER__/$(whoami)/" ~/.config/moltis/app.ini
