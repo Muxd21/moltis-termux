@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moltis Dashboard — Private AI Workstation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --accent: #3dff84;
+            --accent-glow: rgba(61, 255, 132, 0.2);
+            --text: #e0e0e0;
+            --text-muted: #888888;
+            --glass: rgba(255, 255, 255, 0.01);
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            background-image: 
+                radial-gradient(circle at 20% 20%, rgba(61, 255, 132, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(0, 90, 255, 0.1) 0%, transparent 40%);
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            font-weight: 600;
+            font-size: 1.5rem;
+            letter-spacing: -0.5px;
+            color: #fff;
+        }
+
+        .badge {
+            background: var(--accent-glow);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid var(--accent);
+            text-transform: uppercase;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .card-description {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        .port {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 10px;
+            border-radius: 6px;
+            color: var(--accent);
+        }
+
+        .link-btn {
+            color: #fff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .link-btn:hover {
+            opacity: 1;
+        }
+
+        .system-info {
+            margin-top: 3rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            border-radius: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            color: #fff;
+        }
+
+        footer {
+            margin-top: 4rem;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-align: center;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .pulsing {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-group">
+                <span class="logo">Moltis Workstation</span>
+                <span class="badge">Bionic v2</span>
+            </div>
+            <div style="font-family: 'JetBrains Mono'; font-size: 0.8rem; opacity: 0.5;">
+                UPTIME: 99.9%
+            </div>
+        </header>
+
+        <div class="grid">
+            <!-- Moltis AI Card -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Moltis AI</span>
+                    <div class="status-dot"></div>
+                </div>
+                <p class="card-description">
+                    The core AI gateway. Access 340+ models with MCP integration and local terminal access.
+                </p>
+                <div class="card-footer">
+                    <span class="port">:46697</span>
+                    <a href="#" id="link-ai" class="link-btn">Launch UI →</a>
+                </div>
+            </div>
+
+            <!-- Forgejo Card -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Forgejo Git</span>
+                    <div class="status-dot"></div>
+                </div>
+                <p class="card-description">
+                    Private GitHub-style forge. Repositories, Actions, and Issues running on native Bionic SQLite.
+                </p>
+                <div class="card-footer">
+                    <span class="port">:3001</span>
+                    <a href="#" id="link-git" class="link-btn">Open Repos →</a>
+                </div>
+            </div>
+
+            <!-- Caddy Card -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Caddy Server</span>
+                    <div class="status-dot"></div>
+                </div>
+                <p class="card-description">
+                    Local web host for your documentations and generated reports. Auto-HTTPS via Tailscale.
+                </p>
+                <div class="card-footer">
+                    <span class="port">:3002</span>
+                    <span class="badge pulsing" style="border:none; padding: 0;">Active</span>
+                </div>
+            </div>
+
+            <!-- Stealth Mux Card -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">SSLH Stealth Mux</span>
+                    <div class="status-dot"></div>
+                </div>
+                <p class="card-description">
+                    Multiplexes SSH and HTTP on a single port to bypass firewalls and hide your presence.
+                </p>
+                <div class="card-footer">
+                    <span class="port">:4433</span>
+                    <span style="opacity:0.3; font-size: 10px;">SSH + HTTP</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="system-info">
+            <div class="stat-item">
+                <span class="stat-label">Architecture</span>
+                <span class="stat-value">aarch64</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Runtime</span>
+                <span class="stat-value">Bionic</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Network</span>
+                <span class="stat-value" id="ip-addr">Detecting...</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Tailnet</span>
+                <span class="stat-value" style="color: #005AFF;">Connected</span>
+            </div>
+        </div>
+
+        <footer>
+            Built with ❤️ for Android Bionic by Antigravity
+        </footer>
+    </div>
+
+    <script>
+        // Update links dynamically based on current host
+        const host = window.location.hostname;
+        document.getElementById('link-ai').href = `https://${host}:46697`;
+        document.getElementById('link-git').href = `http://${host}:3001`;
+        document.getElementById('ip-addr').textContent = host;
+    </script>
+</body>
+</html>
