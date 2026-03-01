@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Moltis Dashboard — Private AI Workstation</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=JetBrains+Mono&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --bg: #0a0a0f;
@@ -32,7 +34,7 @@
             flex-direction: column;
             align-items: center;
             padding: 2rem;
-            background-image: 
+            background-image:
                 radial-gradient(circle at 20% 20%, rgba(61, 255, 132, 0.05) 0%, transparent 40%),
                 radial-gradient(circle at 80% 80%, rgba(0, 90, 255, 0.1) 0%, transparent 40%);
         }
@@ -95,7 +97,7 @@
         .card:hover {
             border-color: rgba(255, 255, 255, 0.2);
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
 
         .card-header {
@@ -193,9 +195,17 @@
         }
 
         @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
         }
 
         .pulsing {
@@ -203,10 +213,39 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header>
             <div class="logo-group">
+                <svg width="40" height="40" viewBox="-5 -5 170 140" fill="none" xmlns="http://www.w3.org/2000/svg"
+                    style="filter: drop-shadow(0 0 8px var(--accent-glow));">
+                    <defs>
+                        <linearGradient id="shell" x1="40" y1="40" x2="120" y2="110" gradientUnits="userSpaceOnUse">
+                            <stop offset="0%" stop-color="#3dff84" />
+                            <stop offset="100%" stop-color="#00ba4d" />
+                        </linearGradient>
+                        <linearGradient id="claw" x1="0" y1="0" x2="50" y2="50" gradientUnits="userSpaceOnUse">
+                            <stop offset="0%" stop-color="#3dff84" />
+                            <stop offset="100%" stop-color="#00ba4d" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M44 55 Q30 38 18 26" stroke="url(#claw)" stroke-width="8" stroke-linecap="round"
+                        fill="none" />
+                    <path d="M18 26 Q10 14 4 8 Q0 4 2 0 Q6 -2 10 2 Q14 6 16 14 Q17 18 18 26" fill="url(#claw)" />
+                    <path d="M18 26 Q8 26 2 30 Q-2 33 0 36 Q3 39 8 36 Q13 33 18 26" fill="url(#claw)" />
+                    <path d="M116 55 Q130 38 142 26" stroke="url(#claw)" stroke-width="8" stroke-linecap="round"
+                        fill="none" />
+                    <path d="M142 26 Q150 14 156 8 Q160 4 158 0 Q154 -2 150 2 Q146 6 144 14 Q143 18 142 26"
+                        fill="url(#claw)" />
+                    <path d="M142 26 Q152 26 158 30 Q162 33 160 36 Q157 39 152 36 Q147 33 142 26" fill="url(#claw)" />
+                    <ellipse cx="80" cy="76" rx="40" ry="32" fill="url(#shell)" />
+                    <ellipse cx="64" cy="54" rx="9" ry="10" fill="white" />
+                    <ellipse cx="96" cy="54" rx="9" ry="10" fill="white" />
+                    <ellipse cx="65" cy="54" rx="5" ry="6" fill="#1c1917" />
+                    <ellipse cx="97" cy="54" rx="5" ry="6" fill="#1c1917" />
+                    <path d="M68 80 Q80 90 92 80" stroke="white" stroke-width="4" stroke-linecap="round" fill="none" />
+                </svg>
                 <span class="logo">Moltis Workstation</span>
                 <span class="badge">Bionic v2</span>
             </div>
@@ -309,4 +348,5 @@
         document.getElementById('ip-addr').textContent = host;
     </script>
 </body>
+
 </html>
