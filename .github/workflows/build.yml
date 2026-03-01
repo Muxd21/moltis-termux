@@ -149,10 +149,11 @@ jobs:
           
           #[cfg(target_os = "android")]
           #[allow(unsafe_code)]
+          #[allow(unsafe_op_in_unsafe_fn)]
           pub mod android_bionic_shim {
               use std::ffi::{c_int, c_char, c_void};
 
-              extern "C" {
+              unsafe extern "C" {
                   fn posix_openpt(flags: c_int) -> c_int;
                   fn grantpt(fd: c_int) -> c_int;
                   fn unlockpt(fd: c_int) -> c_int;
