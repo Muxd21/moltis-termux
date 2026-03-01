@@ -174,7 +174,7 @@ jobs:
               }
 
               const O_RDWR: c_int = 2;
-              const O_NOCTTY: c_int = 0x400;
+              const O_NOCTTY: c_int = 256; // 0400 octal
               const TIOCSCTTY: usize = 0x540E;
 
               #[unsafe(no_mangle)]
