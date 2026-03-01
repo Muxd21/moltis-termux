@@ -146,6 +146,7 @@ chmod +x "$PREFIX/bin/moltis-up"
 # ────────────────────────────────────────────────────────
 cat <<'EOF' > "$PREFIX/bin/moltis-dev"
 #!/usr/bin/env bash
+moltis-fix-vscode > /dev/null 2>&1
 moltis-up & 
 sleep 3
 echo -e "\033[0;36mActivating Professional Stealth Mux (Port 4433)... \033[0m"
@@ -155,10 +156,23 @@ wait
 EOF
 chmod +x "$PREFIX/bin/moltis-dev"
 
+# ────────────────────────────────────────────────────────
+# Helper: Moltis-Update (Self Update & Node/VSCode Patch)
+# ────────────────────────────────────────────────────────
+cat <<'EOF' > "$PREFIX/bin/moltis-update"
+#!/usr/bin/env bash
+echo -e "\033[0;36mUpdating Moltis Bionic Workstation...\033[0m"
+curl -sL "https://raw.githubusercontent.com/Muxd21/moltis-termux/FULL/install.sh" | bash
+moltis-fix-vscode > /dev/null 2>&1
+echo -e "\033[0;32mUpdate Complete! Please restart your services.\033[0m"
+EOF
+chmod +x "$PREFIX/bin/moltis-update"
+
 echo -e "\n${GREEN}Setup Complete! Bionic Workstation is ready.${NC}"
 echo "--------------------------------------------------------"
 echo -e "  ${CYAN}moltis-up${NC}     Run AI + Git + Dashboard"
 echo -e "  ${CYAN}moltis-dev${NC}    Pro Mode (Stealth Mux + Mosh)"
+echo -e "  ${CYAN}moltis-update${NC} Update configuration & Fix VS Code"
 echo -e "  ${CYAN}moltis-stop${NC}   Kill all services"
 echo "--------------------------------------------------------"
 
