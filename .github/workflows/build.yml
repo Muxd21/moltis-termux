@@ -78,8 +78,6 @@ jobs:
           import pathlib, textwrap
           pathlib.Path('crates/agents/src/lib.rs').write_text(textwrap.dedent('''
               //! LLM agent runtime: model selection, prompt building, tool execution, streaming.
-              #![cfg_attr(feature = \"local-llm\", allow(unsafe_code))]
-
               pub mod auth_profiles;
 
               /// Shared HTTP client for LLM providers.
