@@ -1,0 +1,16 @@
+# Local fallback
+:3002 {
+    root * /data/data/com.termux/files/home/www/docs
+    file_server
+}
+
+# Tailscale hostname (uncomment and replace with your actual Tailscale machine name)
+# This will automatically provision a valid Let's Encrypt TLS certificate via Tailscale!
+#
+# your-phone-vps.tailnet-name.ts.net {
+#     root * /data/data/com.termux/files/home/www/docs
+#     file_server
+#     tls {
+#         get_certificate tailscale
+#     }
+# }

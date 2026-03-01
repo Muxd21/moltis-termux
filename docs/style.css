@@ -1,0 +1,646 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --bg: #000000;
+  --bg-elevated: #1c1c1e;
+  --bg-card: rgba(28, 28, 30, 0.8);
+  --text-primary: #f5f5f7;
+  --text-secondary: #86868b;
+  --text-tertiary: #6e6e73;
+  --accent: #2997ff;
+  --accent-glow: rgba(41, 151, 255, 0.15);
+  --green: #30d158;
+  --orange: #ff9f0a;
+  --purple: #bf5af2;
+  --pink: #ff375f;
+  --border: rgba(255, 255, 255, 0.08);
+  --radius: 20px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text-primary);
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--accent);
+  color: white;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+}
+
+/* ─── NAV ─── */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  background: rgba(0, 0, 0, 0.72);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-inner {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 22px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-logo {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text-primary);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.02em;
+}
+
+.nav-logo img {
+  width: 24px;
+  height: 24px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 28px;
+  list-style: none;
+}
+
+.nav-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: color 0.2s;
+  letter-spacing: 0.01em;
+}
+
+.nav-links a:hover {
+  color: var(--text-primary);
+}
+
+/* ─── HERO ─── */
+.hero {
+  padding: 140px 24px 80px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 800px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(41, 151, 255, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(48, 209, 88, 0.1);
+  border: 1px solid rgba(48, 209, 88, 0.2);
+  border-radius: 100px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green);
+  margin-bottom: 24px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.hero h1 {
+  font-size: clamp(40px, 7vw, 72px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #f5f5f7 30%, #86868b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero p {
+  font-size: clamp(17px, 2.5vw, 21px);
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin: 0 auto 40px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent);
+  color: white;
+  padding: 14px 28px;
+  border-radius: 100px;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 24px rgba(41, 151, 255, 0.3);
+}
+
+.hero-cta:hover {
+  transform: scale(1.04);
+  box-shadow: 0 8px 32px rgba(41, 151, 255, 0.4);
+}
+
+.install-cmd {
+  margin-top: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 20px;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 13px;
+  color: var(--green);
+  cursor: pointer;
+  transition: all 0.2s;
+  max-width: 90vw;
+  overflow-x: auto;
+}
+
+.install-cmd:hover {
+  border-color: var(--green);
+  background: rgba(48, 209, 88, 0.05);
+}
+
+.install-cmd .copy-hint {
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-family: var(--font);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ─── SECTION ─── */
+section {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 80px 24px;
+}
+
+.section-label {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.section-title {
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: 16px;
+}
+
+.section-subtitle {
+  font-size: 17px;
+  color: var(--text-secondary);
+  max-width: 600px;
+  line-height: 1.5;
+  margin-bottom: 48px;
+}
+
+/* ─── SERVICES GRID ─── */
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.service-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px 28px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.service-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--card-accent, var(--accent)), transparent);
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+
+.service-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.service-card:hover::before {
+  opacity: 1;
+}
+
+.service-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+.service-card h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.service-card .port {
+  display: inline-block;
+  font-family: 'SF Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.service-card p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Card accent colors */
+.service-card.ai {
+  --card-accent: var(--purple);
+}
+
+.service-card.ai .service-icon {
+  background: rgba(191, 90, 242, 0.12);
+}
+
+.service-card.ai .port {
+  background: rgba(191, 90, 242, 0.1);
+  color: var(--purple);
+}
+
+.service-card.git {
+  --card-accent: var(--orange);
+}
+
+.service-card.git .service-icon {
+  background: rgba(255, 159, 10, 0.12);
+}
+
+.service-card.git .port {
+  background: rgba(255, 159, 10, 0.1);
+  color: var(--orange);
+}
+
+.service-card.web {
+  --card-accent: var(--green);
+}
+
+.service-card.web .service-icon {
+  background: rgba(48, 209, 88, 0.12);
+}
+
+.service-card.web .port {
+  background: rgba(48, 209, 88, 0.1);
+  color: var(--green);
+}
+
+/* ─── COMMANDS ─── */
+.commands-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.cmd-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.3s;
+}
+
+.cmd-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.cmd-card code {
+  display: inline-block;
+  font-family: 'SF Mono', monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.cmd-card p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.cmd-card.primary {
+  background: linear-gradient(135deg, rgba(41, 151, 255, 0.08), rgba(191, 90, 242, 0.06));
+  border-color: rgba(41, 151, 255, 0.2);
+}
+
+/* ─── USE CASES ─── */
+.usecases-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.usecase {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  transition: all 0.3s;
+}
+
+.usecase:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+}
+
+.usecase-emoji {
+  font-size: 36px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.usecase h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.usecase p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ─── TOOLKIT ─── */
+.toolkit-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.tool {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.tool:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.tool-name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+}
+
+.tool-desc {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+/* ─── ARCHITECTURE ─── */
+.arch-box {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.4;
+  background: #111;
+  padding: 24px;
+  border-radius: 12px;
+  color: #e6e6e6;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.arch-box .purple { color: #a855f7; }
+.arch-box .orange { color: #f97316; }
+.arch-box .green  { color: #22c55e; }
+
+/* ─── INSTALL SECTION ─── */
+.install-section {
+  text-align: center;
+  padding: 100px 24px;
+  position: relative;
+}
+
+.install-section::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(41, 151, 255, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.install-steps {
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+  margin-top: 48px;
+  flex-wrap: wrap;
+}
+
+.install-step {
+  flex: 0 1 260px;
+  text-align: center;
+}
+
+.step-num {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.install-step h4 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.install-step p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ─── FOOTER ─── */
+footer {
+  text-align: center;
+  padding: 40px 24px;
+  border-top: 1px solid var(--border);
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+
+footer a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+footer a:hover {
+  color: var(--text-primary);
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 768px) {
+
+  .services-grid,
+  .commands-grid,
+  .usecases-grid,
+  .toolkit-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nav-links {
+    display: none;
+  }
+
+  .install-steps {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .arch-box {
+    font-size: 11px;
+    padding: 24px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .services-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .toolkit-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ─── ANIMATIONS ─── */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-up {
+  animation: fadeUp 0.8s ease-out forwards;
+  opacity: 0;
+}
+
+.fade-up:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.fade-up:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.fade-up:nth-child(4) {
+  animation-delay: 0.3s;
+}

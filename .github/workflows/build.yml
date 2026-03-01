@@ -1,0 +1,241 @@
+name: Build Moltis Android Binary
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs daily at midnight to check for new versions
+  push:
+    branches:
+      - main
+      - vps
+  workflow_dispatch:
+    inputs:
+      moltis_version:
+        description: 'Moltis version to build (e.g. v0.9.7)'
+        required: true
+        default: 'v0.9.7'
+
+permissions:
+  contents: write
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      latest_version: ${{ steps.get-version.outputs.version }}
+      should_build: ${{ steps.check.outputs.should_build }}
+    steps:
+      - id: get-version
+        run: |
+          VERSION=$(curl -s https://api.github.com/repos/moltis-org/moltis/releases/latest | jq -r .tag_name)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Check if already built
+        id: check
+        run: |
+          TAG="${{ steps.get-version.outputs.version }}-termux"
+          EXISTS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/$TAG | jq -r .tag_name)
+          if [ "$EXISTS" == "null" ]; then
+            echo "should_build=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_build=false" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    needs: check-version
+    if: needs.check-version.outputs.should_build == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Moltis Repo
+        uses: actions/checkout@v4
+        with:
+          repository: moltis-org/moltis
+          ref: ${{ github.event.inputs.moltis_version || needs.check-version.outputs.latest_version }}
+
+      - name: Patch Termux SSL + HTTP Client
+        run: |
+          # ── Patch 1: Inject [env] vars into the process environment ──
+          awk '/pub fn apply_env_overrides\(config: MoltisConfig\) -> MoltisConfig \{/ {
+            print "#[allow(unsafe_code)]"
+            print
+            print "    for (k, v) in &config.env {"
+            print "        if std::env::var(k).is_err() {"
+            print "            unsafe { std::env::set_var(k, v); }"
+            print "        }"
+            print "    }"
+            next
+          }1' crates/config/src/loader.rs > tmp.rs && mv tmp.rs crates/config/src/loader.rs
+
+          # ── Patch 2: Overwrite shared_http_client with Hardcoded IP Bypass & HTTP/1.1 ──
+          python3 -c "
+          import pathlib, textwrap
+          pathlib.Path('crates/agents/src/lib.rs').write_text(textwrap.dedent('''
+              //! LLM agent runtime: model selection, prompt building, tool execution, streaming.
+              #![cfg_attr(feature = \"local-llm\", allow(unsafe_code))]
+
+              pub mod auth_profiles;
+
+              /// Shared HTTP client for LLM providers.
+              pub fn shared_http_client() -> &'static reqwest::Client {
+                  static CLIENT: std::sync::LazyLock<reqwest::Client> =
+                      std::sync::LazyLock::new(|| {
+                          println!(\"!!! HTTP CLIENT INIT START (V11 - ODIN) !!!\");
+                          
+                          let mut builder = reqwest::ClientBuilder::new()
+                              .user_agent(\"Mozilla/5.0 (Windows NT 10.0; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36\")
+                              .connect_timeout(std::time::Duration::from_secs(30))
+                              .tcp_nodelay(true);
+
+                          let cert_path = std::env::var(\"SSL_CERT_FILE\")
+                              .ok()
+                              .unwrap_or_else(|| \"/data/data/com.termux/files/usr/etc/tls/cert.pem\".into());
+
+                          if let Ok(pem_data) = std::fs::read(&cert_path) {
+                              if let Ok(certs) = reqwest::tls::Certificate::from_pem_bundle(&pem_data) {
+                                  for cert in certs {
+                                      builder = builder.add_root_certificate(cert);
+                                  }
+                                  println!(\"!!! HTTP CLIENT: Loaded certs from {} !!!\", cert_path);
+                              }
+                          }
+
+                          let client = builder.build().unwrap_or_else(|e| {
+                              println!(\"!!! HTTP CLIENT BUILD ERROR: {} !!!\", e);
+                              reqwest::Client::new()
+                          });
+                          println!(\"!!! HTTP CLIENT INIT COMPLETE (V11 - STABLE) !!!\");
+                          client
+                      });
+                  &CLIENT
+              }
+              pub mod json_repair;
+              pub mod memory_writer;
+              pub mod model;
+              pub mod multimodal;
+              pub mod prompt;
+              pub mod runner;
+              pub mod tool_parsing;
+              pub use {
+                  model::{ChatMessage, ContentPart, UserContent},
+                  runner::AgentRunError,
+              };
+              pub mod provider_chain;
+              pub mod response_sanitizer;
+              pub mod silent_turn;
+              pub mod skills;
+              pub mod tool_registry;
+          ''').lstrip())
+          "
+
+
+          # -- Patch 2c: Inject stub for openpty to fix missing libutil on Android Bionic --
+          cat << 'EOF' >> crates/agents/src/lib.rs
+          
+          #[cfg(target_os = "android")]
+          #[allow(unsafe_code)]
+          pub mod android_bionic_shim {
+              #[unsafe(no_mangle)]
+              pub unsafe extern "C" fn openpty(
+                  _amaster: *mut std::ffi::c_int,
+                  _aslave: *mut std::ffi::c_int,
+                  _name: *mut std::ffi::c_char,
+                  _termp: *mut std::ffi::c_void,
+                  _winp: *mut std::ffi::c_void,
+              ) -> std::ffi::c_int {
+                  -1
+              }
+          }
+          EOF
+
+          # ── Patch 3: Force version change and inject local-llm feature ──
+          find . -name "Cargo.toml" -exec sed -i 's/^version *= \".*\"/version = \"0.9.10-bionic-v1\"/g' {} +
+          sed -i '/\[features\]/a local-llm = []' crates/agents/Cargo.toml
+          echo "Updated all versions to 0.9.10-bionic-v1 and added local-llm feature to agents"
+          
+          head -35 crates/agents/src/lib.rs
+
+      - name: Install cargo-ndk
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-ndk
+
+      - name: Add Rust target
+        run: rustup target add aarch64-linux-android
+
+      - name: Build aarch64-linux-android (Bionic)
+        run: cargo ndk -t arm64-v8a build --release --no-default-features --features "file-watcher, metrics, prometheus, push-notifications, qmd, tailscale, tls, voice, web-ui"
+
+      - name: Build Networking Tools
+        run: |
+          mkdir -p bin_tools
+          
+          # ── Setup Zig for Ultra-Reliable Cross-Compilation ───
+          echo "Installing Zig..."
+          curl -fsSL https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz -o zig.tar.xz
+          tar -xf zig.tar.xz
+          export PATH=$PWD/zig-linux-x86_64-0.13.0:$PATH
+          
+          # We use 'zig cc' as a drop-in replacement for aarch64-musl-gcc
+          ZIG_TARGET="aarch64-linux-musl"
+          
+          # ── Build entr ─────────────────────────────────────────
+          echo "Building entr..."
+          curl -fsSL https://eradman.com/entrproject/code/entr-5.7.tar.gz -o entr.tar.gz
+          tar -xzf entr.tar.gz
+          cd entr-5.7
+          ./configure
+          make CC="zig cc -target $ZIG_TARGET" LDFLAGS="-static"
+          cp entr ../bin_tools/
+          cd ..
+          
+          # ── Build socat ────────────────────────────────────────
+          echo "Building socat..."
+          curl -fsSL http://www.dest-unreach.org/socat/download/socat-1.8.0.2.tar.gz -o socat.tar.gz
+          tar -xzf socat.tar.gz
+          cd socat-1.8.0.2
+          # Force zig as the compiler for configure
+          CC="zig cc -target $ZIG_TARGET" ./configure --host=aarch64-linux-musl LDFLAGS="-static"
+          make -j$(nproc)
+          cp socat ../bin_tools/
+          cd ..
+          
+          # ── Build sslh ─────────────────────────────────────────
+          echo "Building sslh..."
+          curl -fsSL https://github.com/yrutschle/sslh/archive/refs/tags/v1.22c.tar.gz -o sslh.tar.gz
+          tar -xzf sslh.tar.gz
+          cd sslh-1.22c
+          # Force-disable all optional libraries in Makefile by clearing their values
+          sed -i 's/USELIBPCRE=.*/USELIBPCRE=/' Makefile
+          sed -i 's/USELIBCONFIG=.*/USELIBCONFIG=/' Makefile
+          sed -i 's/USELIBWRAP=.*/USELIBWRAP=/' Makefile
+          sed -i 's/USELIBCAP=.*/USELIBCAP=/' Makefile
+          # Remove any already-defined flags just in case
+          sed -i 's/-DLIBPCRE//g' Makefile
+          sed -i 's/-lpcre2-8//g' Makefile
+          sed -i 's/-DENABLE_REGEX//g' Makefile
+          
+          echo "Starting sslh-fork compilation..."
+          make CC="zig cc -target $ZIG_TARGET" LDFLAGS="-static" sslh-fork
+          
+          if [ -f sslh-fork ]; then
+            cp sslh-fork ../bin_tools/sslh
+            echo "SSLH build successful!"
+          else
+            echo "Error: sslh-fork binary not found!"
+            ls -la
+            exit 1
+          fi
+          cd ..
+
+      - name: Package binary
+        run: |
+          cp target/aarch64-linux-android/release/moltis bin_tools/
+          tar -czvf moltis-termux-aarch64.tar.gz -C bin_tools .
+
+      - name: Release Termux Binary
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.moltis_version || needs.check-version.outputs.latest_version }}-termux-vps
+          name: Termux VPS Build ${{ github.event.inputs.moltis_version || needs.check-version.outputs.latest_version }}
+          files: moltis-termux-aarch64.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

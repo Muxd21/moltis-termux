@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="google-site-verification" content="VpO6muDfaLoGrfoN20KFarcY04oEixrpKSYeJ_jSvN8">
+  <title>Moltis — Your Pocket AI Workstation</title>
+  <meta name="description"
+    content="Turn any Android phone into a private AI server, Git forge, and web host. Zero emulation. Zero cloud dependency. One command.">
+  <meta name="keywords"
+    content="moltis, AI agent, self-hosted, Android, Termux, Forgejo, Caddy, private VPS, Git, SSH, Tailscale">
+  <meta name="author" content="Muxd21">
+  <link rel="canonical" href="https://mymoltishub.com/">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Moltis — Your Pocket AI Workstation">
+  <meta property="og:description"
+    content="Turn any Android phone into a private AI server, Git forge, and web host. One command install.">
+  <meta property="og:url" content="https://mymoltishub.com/">
+  <meta property="og:image" content="https://mymoltishub.com/imgaes/moltis_android.jpg">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Moltis — Your Pocket AI Workstation">
+  <meta name="twitter:description"
+    content="Turn any Android phone into a private AI server, Git forge, and web host. One command install.">
+
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+
+  <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">
+        <img src="docs/images/moltis-logo.svg" alt="">
+        Moltis
+      </a>
+      <ul class="nav-links">
+        <li><a href="#services">Services</a></li>
+        <li><a href="#commands">Commands</a></li>
+        <li><a href="#usecases">Use Cases</a></li>
+        <li><a href="#install">Install</a></li>
+        <li><a href="https://github.com/Muxd21/moltis-termux" target="_blank">GitHub</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-badge">⚡ Native Bionic • Zero Emulation</div>
+    <h1>Your phone is<br>a workstation.</h1>
+    <p>Turn any Android device into a private AI server, Git forge, and web host. No cloud. No Docker. No Proot. One
+      command.</p>
+    <a href="#install" class="hero-cta">Get Started →</a>
+    <div class="install-cmd"
+      onclick="navigator.clipboard.writeText('curl -fsSL https://raw.githubusercontent.com/Muxd21/moltis-termux/FULL/install.sh | bash'); this.querySelector('.copy-hint').textContent='Copied!'">
+      <span>curl -fsSL https://raw.githubusercontent.com/Muxd21/moltis-termux/FULL/install.sh | bash</span>
+      <span class="copy-hint">Click to copy</span>
+    </div>
+  </header>
+
+  <!-- SERVICES -->
+  <section id="services">
+    <div class="section-label">Three services. One command.</div>
+    <h2 class="section-title">Everything runs on your phone.</h2>
+    <p class="section-subtitle">Moltis orchestrates a full developer stack natively on Android's Ext4 partition — no
+      emulation overhead, no permission hacks.</p>
+
+    <div class="services-grid">
+      <div class="service-card ai fade-up">
+        <div class="service-icon">🧠</div>
+        <h3>Moltis AI</h3>
+        <span class="port">:46697</span>
+        <p>Multi-provider AI gateway with 340+ models from OpenRouter, Gemini, Groq, and Cerebras. Full MCP
+          integrations, web chat UI, cron jobs, and memory.</p>
+      </div>
+      <div class="service-card git fade-up">
+        <div class="service-icon">🐙</div>
+        <h3>Forgejo</h3>
+        <span class="port">:3001</span>
+        <p>A complete GitHub-style Git forge. Repositories, issues, pull requests, and Actions CI/CD — all powered by
+          native SQLite on your device.</p>
+      </div>
+      <div class="service-card web fade-up">
+        <div class="service-icon">🌐</div>
+        <h3>Caddy</h3>
+        <span class="port">:3002</span>
+        <p>Zero-config static site hosting. Deploy docs, dashboards, and AI-generated reports instantly. Auto-HTTPS over
+          Tailscale with real certificates.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMMANDS -->
+  <section id="commands">
+    <div class="section-label">Orchestration</div>
+    <h2 class="section-title">One command controls everything.</h2>
+    <p class="section-subtitle">Start, stop, and manage all three services with a single Termux command. Zero manual
+      process management.</p>
+
+    <div class="commands-grid">
+      <div class="cmd-card primary">
+        <code>moltis-up</code>
+        <p>Start everything — AI gateway, Git forge, and web server. Kills stale processes, clears locks, and boots
+          cleanly.</p>
+      </div>
+      <div class="cmd-card primary">
+        <code>moltis-dev</code>
+        <p>Pro mode. Adds Mosh resilience, SSLH stealth multiplexing, and the full dev toolkit on top of moltis-up.</p>
+      </div>
+      <div class="cmd-card">
+        <code>moltis-stop</code>
+        <p>Gracefully tear down all services. Cleans stale LevelDB locks from Forgejo.</p>
+      </div>
+      <div class="cmd-card">
+        <code>moltis-update</code>
+        <p>Pull the latest scripts and configurations from the FULL branch.</p>
+      </div>
+      <div class="cmd-card">
+        <code>moltis-fix-vscode</code>
+        <p>Auto-heal VS Code Server's Node.js binary for Android Bionic compatibility.</p>
+      </div>
+      <div class="cmd-card">
+        <code>moltis-tunnel</code>
+        <p>Generate a temporary public Cloudflare URL when you're away from your Tailnet.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOOLKIT -->
+  <section>
+    <div class="section-label">Pro Dev Suite</div>
+    <h2 class="section-title">Native tools, compiled for Android.</h2>
+    <p class="section-subtitle">Every binary is compiled against Android's Bionic C runtime. No Musl. No glibc shims.
+      Direct hardware execution.</p>
+
+    <div class="toolkit-grid">
+      <div class="tool fade-up">
+        <div class="tool-name">Mosh</div>
+        <div class="tool-desc">Roaming-proof SSH</div>
+      </div>
+      <div class="tool fade-up">
+        <div class="tool-name">Entr</div>
+        <div class="tool-desc">Auto-reload on save</div>
+      </div>
+      <div class="tool fade-up">
+        <div class="tool-name">Socat</div>
+        <div class="tool-desc">Port bridging</div>
+      </div>
+      <div class="tool fade-up">
+        <div class="tool-name">SSLH</div>
+        <div class="tool-desc">Stealth multiplexer</div>
+      </div>
+      <div class="tool fade-up">
+        <div class="tool-name">Forgejo</div>
+        <div class="tool-desc">Local Git forge</div>
+      </div>
+      <div class="tool fade-up">
+        <div class="tool-name">Caddy</div>
+        <div class="tool-desc">Local Pages host</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- USE CASES -->
+  <section id="usecases">
+    <div class="section-label">Built for</div>
+    <h2 class="section-title">Every kind of builder.</h2>
+    <p class="section-subtitle">Whether you're coding on a train, hosting a home lab, or building an autonomous AI agent
+      — Moltis adapts.</p>
+
+    <div class="usecases-grid">
+      <div class="usecase fade-up">
+        <span class="usecase-emoji">💻</span>
+        <h3>AI Coding Server</h3>
+        <p>SSH from your laptop into your phone. Use VS Code Remote or any MCP client to access 340+ models with zero
+          cloud hosting costs.</p>
+      </div>
+      <div class="usecase fade-up">
+        <span class="usecase-emoji">🔒</span>
+        <h3>Private Git Forge</h3>
+        <p>Push to Forgejo on your phone instead of GitHub. Review PRs, run CI workflows, and mirror to GitHub as a cold
+          backup once a day.</p>
+      </div>
+      <div class="usecase fade-up">
+        <span class="usecase-emoji">📄</span>
+        <h3>Instant Documentation</h3>
+        <p>Commit Markdown → Actions deploy to Caddy → instant preview. Faster than GitHub Pages with zero latency.</p>
+      </div>
+      <div class="usecase fade-up">
+        <span class="usecase-emoji">🤖</span>
+        <h3>Self-Documenting Agent</h3>
+        <p>Your AI generates reports → commits to Forgejo → Actions push to Caddy → your dashboard auto-updates. Fully
+          autonomous.</p>
+      </div>
+      <div class="usecase fade-up">
+        <span class="usecase-emoji">🏠</span>
+        <h3>Home Lab on the Go</h3>
+        <p>A pocket-sized, battery-backed server accessible anywhere through Tailscale. No static IP, no DNS, no port
+          forwarding.</p>
+      </div>
+      <div class="usecase fade-up">
+        <span class="usecase-emoji">🧪</span>
+        <h3>Offline Development</h3>
+        <p>Develop and test on a plane, in a café, or anywhere without WiFi. Your entire Git, CI, and hosting stack is
+          local.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE -->
+  <section>
+    <div class="section-label">Under the hood</div>
+    <h2 class="section-title">Native. Not emulated.</h2>
+    <p class="section-subtitle">Most Android "Linux" setups use Proot — 2GB of overhead and broken VPN routing. Moltis
+      compiles against Android's NDK Bionic runtime for zero-overhead execution.</p>
+
+    <pre class="arch-box">
+┌─────────────────────────────────────────────────────┐
+│ Android Phone │ Termux — Native aarch64 Bionic     │
+│                                                     │
+│ <span class="purple">Moltis AI</span>  │ <span class="orange">Forgejo</span> │ <span class="green">Caddy</span>                       │
+│ <span class="purple">:46697</span>     │ <span class="orange">:3001</span>   │ <span class="green">:3002</span>                       │
+│                                                     │
+│ ┌──────────────────────────┐                        │
+│ │ Tailscale                │                        │
+│ │ WireGuard Mesh           │                        │
+│ └────────────┬─────────────┘                        │
+└────────────────────┼────────────────────────────────┘
+                     │
+             ┌───────┴────────┐
+             │ Your Laptop     │
+             │ SSH / Browser   │
+             └─────────────────┘
+    </pre>
+  </section>
+
+  <!-- INSTALL -->
+  <section id="install" class="install-section">
+    <div class="section-label">Get started</div>
+    <h2 class="section-title">Up and running in 60 seconds.</h2>
+    <p class="section-subtitle" style="margin: 0 auto;">Works on any Android device with Termux from F-Droid. Pixel,
+      Samsung, OnePlus, Xiaomi — if it runs Android 7+, it runs Moltis.</p>
+
+    <div class="install-steps">
+      <div class="install-step fade-up">
+        <div class="step-num">1</div>
+        <h4>Install Termux</h4>
+        <p>Get <a href="https://f-droid.org/en/packages/com.termux/" target="_blank"
+            style="color: var(--accent);">Termux from F-Droid</a> (not Play Store). Open it.</p>
+      </div>
+      <div class="install-step fade-up">
+        <div class="step-num">2</div>
+        <h4>Run one command</h4>
+        <p><code style="font-size: 11px; color: var(--green);">curl -fsSL .../FULL/install.sh | bash</code></p>
+      </div>
+      <div class="install-step fade-up">
+        <div class="step-num">3</div>
+        <h4>Launch</h4>
+        <p>Type <code style="color: var(--accent);">moltis-up</code> and connect from your PC via SSH or browser.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p style="margin-bottom: 8px;"><a href="https://github.com/Muxd21/moltis-termux" target="_blank">GitHub</a> · <a
+        href="https://github.com/Muxd21/moltis-termux/blob/FULL/README.md" target="_blank">Documentation</a> · MIT
+      License</p>
+    <p>Moltis — Private AI that fits in your pocket.</p>
+  </footer>
+
+  <script>
+    // Intersection Observer for fade-up animations
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.animationPlayState = 'running';
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.fade-up').forEach(el => {
+      el.style.animationPlayState = 'paused';
+      observer.observe(el);
+    });
+  </script>
+
+</body>
+
+</html>
