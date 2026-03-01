@@ -66,12 +66,19 @@ jobs:
           }1' crates/config/src/loader.rs > tmp.rs && mv tmp.rs crates/config/src/loader.rs
 
           # ── Patch 2: Disabling Local LLM & llama-cpp-2 to avoid build failures ──
-          # Remove llama-cpp-2 and local-llm from all Cargo.toml files
-          find . -name "Cargo.toml" -exec sed -i '/llama-cpp-2/d' {} +
-          find . -name "Cargo.toml" -exec sed -i 's/"local-llm",//g' {} +
-          find . -name "Cargo.toml" -exec sed -i 's/"local-llm"//g' {} +
-          find . -name "Cargo.toml" -exec sed -i 's/"local-embeddings",//g' {} +
-          find . -name "Cargo.toml" -exec sed -i 's/"local-embeddings"//g' {} +
+          # 1. Delete dependency definitions for llama-cpp-2 (this prevents it from being downloaded/built)
+          find . -name "Cargo.toml" -exec sed -i '/^[[:space:]]*llama-cpp-2[[:space:]\.]*=/d' {} +
+          find . -name "Cargo.toml" -exec sed -i '/^[[:space:]]*llama-cpp-sys-2[[:space:]\.]*=/d' {} +
+          
+          # 2. Remove any feature activations that reference local-llm, local-embeddings, or llama-cpp-2.
+          # This converts lines like 'local-embeddings = ["moltis-memory/local-embeddings"]' into 'local-embeddings = []'
+          # which is valid and prevents cargo from trying to resolve the missing features.
+          find . -name "Cargo.toml" -exec sed -i 's/"[^"]*local-llm[^"]*",*//g' {} +
+          find . -name "Cargo.toml" -exec sed -i 's/"[^"]*local-embeddings[^"]*",*//g' {} +
+          find . -name "Cargo.toml" -exec sed -i 's/"[^"]*llama-cpp-2[^"]*",*//g' {} +
+          
+          # 3. Cleanup: remove orphaned commas and fix empty lists to ensure valid TOML.
+          find . -name "Cargo.toml" -exec sed -i 's/\[,/\[/g; s/,,/,/g; s/,]/]/g' {} +
           
           # ── Patch 3: Overwrite shared_http_client with Hardcoded IP Bypass & HTTP/1.1 ──
           python3 -c "
