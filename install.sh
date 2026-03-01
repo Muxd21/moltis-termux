@@ -65,9 +65,21 @@ for BASE_DIR in "\$HOME/.vscode-server/bin" "\$HOME/.antigravity-server/bin"; do
     if [ -d "\$BASE_DIR" ]; then
         echo "Healing Server for Android Bionic (\$BASE_DIR)..."
         for dir in "\$BASE_DIR"/*; do
-            if [ -d "\$dir/bin" ] && [ -f "\$dir/node" ] && [ ! -L "\$dir/node" ]; then
-                mv "\$dir/node" "\$dir/node.broken"
-                ln -sf "\$PREFIX/bin/node" "\$dir/node"
+            if [ -d "\$dir/bin" ] && [ -e "\$dir/node" ]; then
+                # If we haven't backed up the original node yet, back it up
+                if [ ! -f "\$dir/node.broken" ] && [ ! -L "\$dir/node" ]; then
+                    mv "\$dir/node" "\$dir/node.broken"
+                fi
+                # Overwrite existing node (symlink or old wrapper)
+                rm -f "\$dir/node"
+                cat <<'WRAPPER' > "\$dir/node"
+#!/usr/bin/env bash
+export TMPDIR="\$PREFIX/tmp"
+export TMP="\$PREFIX/tmp"
+export TEMP="\$PREFIX/tmp"
+exec "\$PREFIX/bin/node" "\$@"
+WRAPPER
+                chmod +x "\$dir/node"
             fi
         done
     fi
