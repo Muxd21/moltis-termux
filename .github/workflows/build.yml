@@ -76,67 +76,67 @@ jobs:
           sed -i 's/wasm[[:space:]]*=[[:space:]]*\[[^]]*\]/wasm = []/g' crates/tools/Cargo.toml
           
           # ── Patch 3: Overwrite shared_http_client ROBUSTLY via Python (Future-Proof) ──
-          python3 -c '
-import pathlib
+          python3 - <<'PY_EOF'
+          import pathlib
 
-file_path = pathlib.Path("crates/agents/src/lib.rs")
-content = file_path.read_text()
-start_idx = content.find("pub fn shared_http_client() ->")
-if start_idx != -1:
-    bracket_count = 0
-    in_function = False
-    end_idx = -1
-    for i in range(start_idx, len(content)):
-        if content[i] == "{":
-            bracket_count += 1
-            in_function = True
-        elif content[i] == "}":
-            bracket_count -= 1
-        
-        if in_function and bracket_count == 0:
-            end_idx = i + 1
-            break
+          file_path = pathlib.Path("crates/agents/src/lib.rs")
+          content = file_path.read_text()
+          start_idx = content.find("pub fn shared_http_client() ->")
+          if start_idx != -1:
+              bracket_count = 0
+              in_function = False
+              end_idx = -1
+              for i in range(start_idx, len(content)):
+                  if content[i] == "{":
+                      bracket_count += 1
+                      in_function = True
+                  elif content[i] == "}":
+                      bracket_count -= 1
+                  
+                  if in_function and bracket_count == 0:
+                      end_idx = i + 1
+                      break
 
-    if end_idx != -1:
-        new_fn = """
-pub fn shared_http_client() -> &'"'"'static reqwest::Client {
-    static CLIENT: std::sync::LazyLock<reqwest::Client> =
-        std::sync::LazyLock::new(|| {
-            println!("!!! HTTP CLIENT INIT START (BIONIC) !!!");
-            let mut builder = reqwest::ClientBuilder::new()
-                .user_agent("Mozilla/5.0 (Windows NT 10.0; Android 14; Mobile) AppleWebKit/537.36")
-                .connect_timeout(std::time::Duration::from_secs(30))
-                .tcp_nodelay(true);
+              if end_idx != -1:
+                  new_fn = """
+          pub fn shared_http_client() -> &'static reqwest::Client {
+              static CLIENT: std::sync::LazyLock<reqwest::Client> =
+                  std::sync::LazyLock::new(|| {
+                      println!("!!! HTTP CLIENT INIT START (BIONIC) !!!");
+                      let mut builder = reqwest::ClientBuilder::new()
+                          .user_agent("Mozilla/5.0 (Windows NT 10.0; Android 14; Mobile) AppleWebKit/537.36")
+                          .connect_timeout(std::time::Duration::from_secs(30))
+                          .tcp_nodelay(true);
 
-            let cert_path = std::env::var("SSL_CERT_FILE")
-                .unwrap_or_else(|_| "/data/data/com.termux/files/usr/etc/tls/cert.pem".into());
+                      let cert_path = std::env::var("SSL_CERT_FILE")
+                          .unwrap_or_else(|_| "/data/data/com.termux/files/usr/etc/tls/cert.pem".into());
 
-            if let Ok(pem_data) = std::fs::read(&cert_path) {
-                if let Ok(certs) = reqwest::tls::Certificate::from_pem_bundle(&pem_data) {
-                    for cert in certs {
-                        builder = builder.add_root_certificate(cert);
-                    }
-                    println!("!!! HTTP CLIENT: Loaded certs from {} !!!", cert_path);
-                }
-            }
+                      if let Ok(pem_data) = std::fs::read(&cert_path) {
+                          if let Ok(certs) = reqwest::tls::Certificate::from_pem_bundle(&pem_data) {
+                              for cert in certs {
+                                  builder = builder.add_root_certificate(cert);
+                              }
+                              println!("!!! HTTP CLIENT: Loaded certs from {} !!!", cert_path);
+                          }
+                      }
 
-            let client = builder.build().unwrap_or_else(|e| {
-                println!("!!! HTTP CLIENT BUILD ERROR: {} !!!", e);
-                reqwest::Client::new()
-            });
-            client
-        });
-    &CLIENT
-}
-"""
-        content = content[:start_idx] + new_fn.strip() + content[end_idx:]
-        file_path.write_text(content)
-        print("Patched shared_http_client successfully.")
-    else:
-        print("Error: Could not find end of function for shared_http_client")
-else:
-    print("Error: Could not find start of function for shared_http_client")
-'
+                      let client = builder.build().unwrap_or_else(|e| {
+                          println!("!!! HTTP CLIENT BUILD ERROR: {} !!!", e);
+                          reqwest::Client::new()
+                      });
+                      client
+                  });
+              &CLIENT
+          }
+          """
+                  content = content[:start_idx] + new_fn.strip() + content[end_idx:]
+                  file_path.write_text(content)
+                  print("Patched shared_http_client successfully.")
+              else:
+                  print("Error: Could not find end of function for shared_http_client")
+          else:
+              print("Error: Could not find start of function for shared_http_client")
+          PY_EOF
 
           # -- Patch 4: Inject working PTY shim for Android Bionic (Corrected Rust 2024 ABI) --
           cat << 'EOF' >> crates/agents/src/lib.rs
