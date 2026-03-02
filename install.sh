@@ -327,8 +327,9 @@ WRAPPER
 
             # ── Graft native pty.node bindings ──
             for PTY_ROOT in "node_modules/node-pty" "node_modules/@vscode/node-pty"; do
-                PTY_DIR="$dir/$PTY_ROOT/build/Release"
-                if [ -d "$PTY_DIR" ] && [ -n "$GLOBAL_PTY" ] && [ -f "$GLOBAL_PTY" ]; then
+                if [ -d "$dir/$PTY_ROOT" ] && [ -n "$GLOBAL_PTY" ] && [ -f "$GLOBAL_PTY" ]; then
+                    PTY_DIR="$dir/$PTY_ROOT/build/Release"
+                    mkdir -p "$PTY_DIR"
                     if [ "$FORCE" -eq 1 ] || [ ! -f "$PTY_DIR/pty.node.original" ]; then
                         [ -f "$PTY_DIR/pty.node" ] && [ ! -f "$PTY_DIR/pty.node.original" ] && \
                             mv "$PTY_DIR/pty.node" "$PTY_DIR/pty.node.original"
