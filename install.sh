@@ -94,6 +94,21 @@ for BASE_DIR in "\$HOME/.vscode-server/bin" "\$HOME/.antigravity-server/bin"; do
         echo "Healing Server for Android Bionic (\$BASE_DIR)..."
         for dir in "\$BASE_DIR"/*; do
             if [ -d "\$dir/bin" ] && [ -e "\$dir/node" ]; then
+                # Replace incompatible packaged node with a shim to native Bionic Node
+                if [ ! -f "\$dir/node.broken" ] && [ ! -L "\$dir/node" ]; then
+                    mv "\$dir/node" "\$dir/node.broken"
+                fi
+                rm -f "\$dir/node"
+                cat <<'WRAPPER' > "\$dir/node"
+#!/usr/bin/env bash
+export TMPDIR="\$PREFIX/tmp"
+export TMP="\$PREFIX/tmp"
+export TEMP="\$PREFIX/tmp"
+exec "\$PREFIX/bin/node" "\$@"
+WRAPPER
+                chmod +x "\$dir/node"
+
+                # Replace bundled PTY bindings with our Bionic-compiled extension
                 PTY_DIR="\$dir/node_modules/node-pty/build/Release"
                 if [ -d "\$PTY_DIR" ]; then
                     if [ -f "\$GLOBAL_PTY" ]; then
