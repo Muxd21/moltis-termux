@@ -161,11 +161,25 @@ patch_server_dirs() {
             [ -d "$dir" ] || continue
 
             NODE_BIN="$dir/node"
+
+            # --- CORRUPTION DETECTION & CLEANUP ---
+            # If the old method left a symlink, it breaks grun wrapper!
+            if [ -L "$NODE_BIN" ] || [ -L "$dir/node.orig" ]; then
+                log "  ⚠ Legacy Bionic symlink detected. Wiping corrupted VS Code server $dir..."
+                pkill -9 -f "$dir" 2>/dev/null || true
+                rm -rf "$dir"
+                continue
+            fi
+
             [ -e "$NODE_BIN" ] || [ -e "$dir/node.orig" ] || continue
 
             if [ "$FORCE" -eq 1 ] || ! head -5 "$NODE_BIN" 2>/dev/null | grep -q 'grun'; then
                 COMMIT_ID=$(basename "$dir")
                 log "\n🔧 Attaching Glibc-runner to VS Code [${COMMIT_ID:0:8}...]..."
+
+                # CRITICAL: Kill any running stale/zombie node servers for this commit!
+                # If a Bionic server is running, the client connects to it and hangs!
+                pkill -9 -f "$dir" 2>/dev/null || true
 
                 # Backup shipped glibc node
                 if [ -e "$NODE_BIN" ] && [ ! -f "$dir/node.orig" ]; then
@@ -185,6 +199,7 @@ unset LD_PRELOAD
 export SHELL="$PREFIX/bin/bash"
 export TERM="xterm-256color"
 export COLORTERM="truecolor"
+export TMPDIR="$PREFIX/tmp"
 
 # Execute the shipped node using Termux glibc-runner
 exec grun "$0.orig" "$@"
@@ -320,6 +335,10 @@ pkill -f "sslh-fork" 2>/dev/null || true
 termux-wake-unlock 2>/dev/null || true
 echo "Workstation stopped."
 EOF
+
+# Clean legacy symlink patchers from bashrc
+sed -i '/Patch VS Code/,+6d' "$HOME/.bashrc" 2>/dev/null || true
+sed -i '/ln -sf.*node/d' "$HOME/.bashrc" 2>/dev/null || true
 
 # Create bashrc aliases
 if ! grep -q "Moltis Glibc Terminal" "$HOME/.bashrc" 2>/dev/null; then
