@@ -157,6 +157,12 @@ Subsystem sftp /data/data/com.termux/files/usr/libexec/sftp-server
 # ── PTY ──
 # Permit TTY allocation for VS Code terminal
 PermitTTY yes
+
+# ── Environment ──
+# Allow ~/.ssh/environment to set PATH for non-interactive sessions
+# (critical for VS Code Remote SSH bootstrap which runs 'bash -s')
+PermitUserEnvironment yes
+AcceptEnv TERM COLORTERM LANG
 SSHD_CONF
 
 # Generate host keys if missing
@@ -168,6 +174,17 @@ if [ ! -f "$PREFIX/etc/ssh/ssh_host_rsa_key" ]; then
     ssh-keygen -t rsa -b 4096 -f "$PREFIX/etc/ssh/ssh_host_rsa_key" -N "" -q
     echo -e "  ${GREEN}✓ RSA host key generated${NC}"
 fi
+
+# Create ~/.ssh/environment so non-interactive SSH sessions have PATH
+# Without this, VS Code's 'ssh moltis bash -s' bootstrap fails with exit 127
+mkdir -p "$HOME/.ssh"
+cat <<'SSH_ENV' > "$HOME/.ssh/environment"
+PATH=/data/data/com.termux/files/usr/bin:/data/data/com.termux/files/usr/sbin:/data/data/com.termux/files/home/.local/bin:/data/data/com.termux/files/home/.cargo/bin
+TMPDIR=/data/data/com.termux/files/usr/tmp
+PREFIX=/data/data/com.termux/files/usr
+SSH_ENV
+chmod 600 "$HOME/.ssh/environment"
+echo -e "  ${GREEN}✓ SSH environment configured for non-interactive sessions${NC}"
 
 echo -e "  ${GREEN}✓ sshd_config deployed (Port 8022, KeepAlive 30s, Tunneling ON)${NC}"
 
