@@ -1,0 +1,31 @@
+export PATH="$HOME/.cargo/bin:$PATH"
+export PATH="/data/data/com.termux/files/home/.local/bin:$PATH"
+
+# >>> OpenClaw on Android >>>
+export TMPDIR="$PREFIX/tmp"
+export TMP="$TMPDIR"
+export TEMP="$TMPDIR"
+export CONTAINER=1
+export GYP_DEFINES="OS=linux android_ndk_path=$PREFIX"
+export CPATH="$PREFIX/include/glib-2.0:$PREFIX/lib/glib-2.0/include"
+# <<< OpenClaw on Android <<<
+
+# Patch VS Code/Antigravity node binaries for Termux
+find ~/.vscode-server ~/.antigravity-server -type f -path '*/bin/*/node' 2>/dev/null | while read -r f; do
+  [ ! -L "$f" ] && ln -sf "$PREFIX/bin/node" "$f"
+done
+
+# Moltis Auto-Detect: Patch new VS Code/Antigravity server updates
+if command -v moltis-fix-vscode &>/dev/null; then
+    moltis-fix-vscode --quiet &
+fi
+
+# ═══ Moltis Antigravity Terminal Environment ═══
+# Force 256-color + truecolor for VS Code and modern terminals
+export TERM=xterm-256color
+export COLORTERM=truecolor
+# Ensure Termux Bionic binaries take priority
+export PATH="$PREFIX/bin:$PATH"
+export SHELL="$PREFIX/bin/bash"
+# Bionic path translation for scripts with /bin/bash shebangs
+export LD_PRELOAD="$PREFIX/lib/libtermux-exec.so"
