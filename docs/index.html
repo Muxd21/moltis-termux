@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moltis Antigravity — Pocket AI Workstation Dashboard</title>
+  <meta name="description" content="True Android Native Bionic VPS Dashboard. Self-hosted AI Gateway, Git Forge, VS Code Bridge, and Web Stack.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  
+  <style>
+    /* 
+      Apple-inspired Dark Mode Typography & Reset 
+    */
+    :root {
+      --bg: #000000;
+      --surface: #121212;
+      --surface-elevated: #1c1c1e;
+      --text: #f5f5f7;
+      --text-muted: #86868b;
+      --accent: #2997ff;
+      --accent-glow: rgba(41, 151, 255, 0.4);
+      --green: #30d158;
+      --orange: #ff9f0a;
+      --purple: #bf5af2;
+      --red: #ff453a;
+      --border: rgba(255, 255, 255, 0.08);
+      --font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    /* Navbar */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 0;
+    }
+
+    .nav-inner {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav-logo {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: -0.5px;
+    }
+
+    .nav-logo svg {
+      width: 24px;
+      height: 24px;
+      fill: var(--text);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    /* Hero / Status Header */
+    .hero {
+      padding: 100px 24px 60px;
+      text-align: center;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      padding: 6px 14px;
+      background: rgba(48, 209, 88, 0.1);
+      color: var(--green);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      border: 1px solid rgba(48, 209, 88, 0.2);
+      animation: badge-glow 3s ease-in-out infinite;
+    }
+
+    @keyframes badge-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(48, 209, 88, 0); }
+      50% { box-shadow: 0 0 20px 0 rgba(48, 209, 88, 0.15); }
+    }
+
+    .hero h1 {
+      font-size: 56px;
+      font-weight: 700;
+      letter-spacing: -2px;
+      line-height: 1.05;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 .gradient-text {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 50%, var(--orange) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      font-size: 21px;
+      color: var(--text-muted);
+      line-height: 1.4;
+      max-width: 600px;
+      margin: 0 auto 40px;
+      letter-spacing: -0.5px;
+    }
+
+    /* Live VPS Dashboard Metric Cards */
+    .dashboard-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      max-width: 1000px;
+      margin: 0 auto 60px;
+      padding: 0 24px;
+    }
+
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      transition: transform 0.3s ease, background 0.3s, box-shadow 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-4px);
+      background: var(--surface-elevated);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--green);
+      opacity: 0.6;
+    }
+
+    .metric-card.accent-blue::before { background: var(--accent); }
+    .metric-card.accent-orange::before { background: var(--orange); }
+    .metric-card.accent-purple::before { background: var(--purple); }
+
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 10px var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(48, 209, 88, 0.4); }
+      70% { box-shadow: 0 0 0 8px rgba(48, 209, 88, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(48, 209, 88, 0); }
+    }
+
+    .metric-title {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .metric-value {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      margin-bottom: 4px;
+    }
+
+    .metric-detail {
+        font-family: var(--font-mono);
+        color: var(--text-muted);
+        font-size: 12px;
+        background: rgba(255,255,255,0.05);
+        padding: 4px 8px;
+        border-radius: 6px;
+        display: inline-block;
+    }
+
+    .btn-link {
+        position: absolute;
+        bottom: 24px;
+        right: 24px;
+        color: var(--accent);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        transition: transform 0.2s;
+    }
+
+    .btn-link:hover { 
+      text-decoration: underline;
+      transform: translateX(2px);
+    }
+
+    /* True VPS Architecture Section */
+    .section-container {
+      max-width: 1000px;
+      margin: 0 auto 80px;
+      padding: 0 24px;
+    }
+
+    .section-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 40px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      margin-bottom: 20px;
+    }
+
+    .bionic-quirks {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .quirk-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+        transition: transform 0.2s, background 0.2s;
+    }
+
+    .quirk-card:hover {
+        transform: translateX(4px);
+        background: var(--surface-elevated);
+    }
+    
+    .quirk-icon { font-size: 24px; }
+    .quirk-content h4 { font-size: 18px; margin-bottom: 6px; font-weight: 600; }
+    .quirk-content p { color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-bottom: 12px;}
+    .quirk-code {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text);
+        background: #000;
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        display: inline-block;
+    }
+
+    /* Command Table */
+    .cmd-table {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .cmd-row {
+        display: flex;
+        padding: 16px;
+        border-bottom: 1px solid var(--border);
+        transition: background 0.2s;
+    }
+
+    .cmd-row:last-child { border-bottom: none; }
+    .cmd-row:hover { background: var(--surface-elevated); }
+
+    .cmd-row.header {
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    .cmd-name {
+        flex: 1;
+        font-family: var(--font-mono);
+        color: var(--accent);
+        font-size: 14px;
+    }
+
+    .cmd-desc {
+        flex: 2;
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+
+    .cmd-row.header .cmd-name,
+    .cmd-row.header .cmd-desc {
+        font-family: var(--font-body);
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 24px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    
+    footer a {
+        color: var(--text);
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    footer a:hover { color: var(--accent); }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 36px; }
+      .section-title { font-size: 28px; }
+      .metric-value { font-size: 24px; }
+      .cmd-row { flex-direction: column; gap: 4px; }
+      .cmd-row.header { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">⚡ Moltis Antigravity</a>
+      <ul class="nav-links">
+        <li><a href="#dashboard">Dashboard</a></li>
+        <li><a href="#architecture">Architecture</a></li>
+        <li><a href="#services">Commands</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-badge">System Online • Antigravity Bionic VPS</div>
+    <h1>Moltis <span class="gradient-text">Dashboard</span></h1>
+    <p>Your Android device is orchestrating a private AI gateway, Git forge, VS Code bridge, and native web server. No cloud required.</p>
+  </header>
+
+  <!-- Dashboard Overview Panels -->
+  <section id="dashboard" class="dashboard-metrics">
+    <!-- Component 1: Moltis AI -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-title">Moltis AI Engine</span>
+        <div class="status-dot"></div>
+      </div>
+      <div class="metric-value">Port 46697</div>
+      <div class="metric-detail">sv status moltis</div>
+      <p style="color:var(--text-muted); font-size:13px; margin-top:12px;">Multi-provider AI Gateway active. 340+ models with MCP integrations.</p>
+      <a href="https://localhost:46697" class="btn-link" target="_blank">Open Chat →</a>
+    </div>
+
+    <!-- Component 2: Forgejo -->
+    <div class="metric-card accent-blue">
+      <div class="metric-header">
+        <span class="metric-title">Forgejo Git Forge</span>
+        <div class="status-dot"></div>
+      </div>
+      <div class="metric-value">Port 3001</div>
+      <div class="metric-detail">sv status forgejo</div>
+      <p style="color:var(--text-muted); font-size:13px; margin-top:12px;">Local Git repositories active on Ext4 natively via SQLite.</p>
+      <a href="http://localhost:3001" class="btn-link" target="_blank">Open Forge →</a>
+    </div>
+
+    <!-- Component 3: Caddy -->
+    <div class="metric-card accent-orange">
+      <div class="metric-header">
+        <span class="metric-title">Caddy Web Server</span>
+        <div class="status-dot"></div>
+      </div>
+      <div class="metric-value">Port 3002</div>
+      <div class="metric-detail">sv status caddy</div>
+      <p style="color:var(--text-muted); font-size:13px; margin-top:12px;">Reverse proxy and static asset delivery active.</p>
+    </div>
+
+    <!-- Component 4: VS Code Patcher Watchdog -->
+    <div class="metric-card accent-purple">
+      <div class="metric-header">
+        <span class="metric-title">VS Code Patcher</span>
+        <div class="status-dot"></div>
+      </div>
+      <div class="metric-value">Watchdog</div>
+      <div class="metric-detail">sv status vscode-patcher</div>
+      <p style="color:var(--text-muted); font-size:13px; margin-top:12px;">Self-healing: auto-patches glibc→Bionic node binaries on VS Code updates.</p>
+    </div>
+
+    <!-- Component 5: SSH -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-title">SSH Server</span>
+        <div class="status-dot"></div>
+      </div>
+      <div class="metric-value">Port 8022</div>
+      <div class="metric-detail">TCPKeepAlive 30s</div>
+      <p style="color:var(--text-muted); font-size:13px; margin-top:12px;">Hardened sshd with aggressive keepalive. Survives WiFi↔5G handoffs.</p>
+    </div>
+
+    <!-- Component 6: Wakelock -->
+    <div class="metric-card accent-blue">
+      <div class="metric-header">
+        <span class="metric-title">OOM Protection</span>
+        <div class="status-dot"></div>
+      </div>
+      <div class="metric-value">Active</div>
+      <div class="metric-detail">termux-wake-lock + nice -n -5</div>
+      <p style="color:var(--text-muted); font-size:13px; margin-top:12px;">Wakelock prevents CPU sleep. Process priority elevated to resist OOM killer.</p>
+    </div>
+  </section>
+
+  <!-- Bionic Architecture -->
+  <section id="architecture" class="section-container">
+    <div class="section-label">True Native Build</div>
+    <h2 class="section-title">The Antigravity Framework</h2>
+    <p style="color: var(--text-muted); font-size: 18px; margin-bottom: 30px;">How Moltis overcomes the strict Android sandbox to provide a frictionless VPS environment.</p>
+
+    <div class="bionic-quirks">
+        <div class="quirk-card">
+            <div class="quirk-icon">👻</div>
+            <div class="quirk-content">
+                <h4>Phantom Process Killer</h4>
+                <p>Android 12+ randomly kills background child processes. Moltis requires this one-time ADB fix to preserve your services permanently.</p>
+                <div class="quirk-code">adb shell "settings put global phantom_process_handling false"</div>
+            </div>
+        </div>
+
+        <div class="quirk-card">
+            <div class="quirk-icon">🚏</div>
+            <div class="quirk-content">
+                <h4>The Hardcoded Path Trap</h4>
+                <p>There is no <code>/bin/bash</code> on Android Bionic. Moltis intercepts and translates all standard Unix paths using <code>termux-exec</code> (LD_PRELOAD).</p>
+                <div class="quirk-code">export LD_PRELOAD=$PREFIX/lib/libtermux-exec.so</div>
+            </div>
+        </div>
+
+        <div class="quirk-card">
+            <div class="quirk-icon">🔧</div>
+            <div class="quirk-content">
+                <h4>VS Code Impedance Mismatch</h4>
+                <p>VS Code downloads glibc Node.js binaries that crash on Bionic. The self-healing patcher hot-swaps them with native Termux node and grafts native pty.node bindings.</p>
+                <div class="quirk-code">moltis-fix-vscode --force</div>
+            </div>
+        </div>
+
+        <div class="quirk-card">
+            <div class="quirk-icon">⚙️</div>
+            <div class="quirk-content">
+                <h4>No Systemd (Runit Injection)</h4>
+                <p>Phones don't have <code>systemd</code>. We orchestrate everything using <code>termux-services</code> (runit) with automatic restart and log rotation.</p>
+                <div class="quirk-code">sv up moltis && cat $PREFIX/var/log/moltis/current</div>
+            </div>
+        </div>
+
+        <div class="quirk-card">
+            <div class="quirk-icon">🔋</div>
+            <div class="quirk-content">
+                <h4>Android OOM Killer</h4>
+                <p>Android aggressively kills background processes. Moltis uses wakelock + elevated process priority (<code>nice -n -5</code>) to keep services alive when the screen is off.</p>
+                <div class="quirk-code">termux-wake-lock && nice -n -5 ionice -c 2 -n 0 moltis</div>
+            </div>
+        </div>
+    </div>
+  </section>
+
+  <!-- Commands Reference -->
+  <section id="services" class="section-container">
+    <div class="section-label">CLI Interface</div>
+    <h2 class="section-title">Terminal Commands</h2>
+    <div class="cmd-table">
+        <div class="cmd-row header">
+            <div class="cmd-name">Command</div>
+            <div class="cmd-desc">Action</div>
+        </div>
+        <div class="cmd-row">
+            <div class="cmd-name">moltis-up</div>
+            <div class="cmd-desc">Start all services with wakelock + process priority elevation</div>
+        </div>
+        <div class="cmd-row">
+            <div class="cmd-name">moltis-stop</div>
+            <div class="cmd-desc">Stop all services and release wakelock</div>
+        </div>
+        <div class="cmd-row">
+            <div class="cmd-name">moltis-dev</div>
+            <div class="cmd-desc">Pro Mode — all services + SSLH stealth mux on port 4433</div>
+        </div>
+        <div class="cmd-row">
+            <div class="cmd-name">moltis-status</div>
+            <div class="cmd-desc">Health check: services, network, VS Code patch status</div>
+        </div>
+        <div class="cmd-row">
+            <div class="cmd-name">moltis-fix-vscode</div>
+            <div class="cmd-desc">Patch VS Code binaries for Bionic (--force, --watch)</div>
+        </div>
+        <div class="cmd-row">
+            <div class="cmd-name">moltis-update</div>
+            <div class="cmd-desc">Self-update installer + re-patch VS Code</div>
+        </div>
+        <div class="cmd-row">
+            <div class="cmd-name">moltis-bot-setup</div>
+            <div class="cmd-desc">Add any script as a supervised runit service</div>
+        </div>
+        <div class="cmd-row">
+            <div class="cmd-name">sv status &lt;service&gt;</div>
+            <div class="cmd-desc">Monitor individual runit service status</div>
+        </div>
+        <div class="cmd-row">
+            <div class="cmd-name">bash diagnose-pty.sh</div>
+            <div class="cmd-desc">Full system diagnostic (SSH, PTY, services, network)</div>
+        </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>Moltis Antigravity Workstation · Built for Android Bionic · <a href="https://github.com/Muxd21/moltis-termux">GitHub Repository</a></p>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,26 @@
+name: Deploy Local Pages
+on:
+  push:
+    branches:
+      - main
+      - FULL
+    paths:
+      - 'docs/**'
+
+jobs:
+  Deploy-Pages:
+    runs-on: host
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Deploy to Bionic Caddy Server
+        run: |
+          echo "Syncing documentation to Caddy root..."
+          # Ensure target directory exists in native Ext4 partition
+          mkdir -p /data/data/com.termux/files/home/www/docs
+          
+          # Force sync files to Caddy root
+          cp -rf docs/* /data/data/com.termux/files/home/www/docs/
+          
+          echo "Deployment successful! Refresh your local dashboard."

@@ -1,0 +1,9 @@
+.claude/
+CLAUDE.md
+.plan/
+node_modules/
+*.log
+.DS_Store
+.idea/
+.issues
+ssh.md
