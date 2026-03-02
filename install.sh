@@ -27,7 +27,7 @@ sleep 3
 # Install core dependencies including critical termux VPS tools
 echo "Installing Core Dependencies..."
 pkg update -y
-pkg install -y termux-exec termux-services curl wget tar openssl ca-certificates binutils termux-api coreutils nodejs which python python-pip libxml2 libxslt clang make pkg-config libiconv mosh caddy gitea runit || true
+pkg install -y termux-exec termux-services curl wget tar openssl ca-certificates binutils termux-api coreutils nodejs which python python-pip libxml2 libxslt clang make pkg-config libiconv mosh tmux caddy gitea runit || true
 
 if [ ! -f "$PREFIX/bin/ldd" ]; then
     cat <<'EOF' > "$PREFIX/bin/ldd"
@@ -79,50 +79,105 @@ fi
 
 # ────────────────────────────────────────────────────────
 # Helper: The Node Healer (Termux-Exec + PTY fixes)
+# Deep-System Bionic Wrapper + node-pty Graft + Auto-Detect
 # ────────────────────────────────────────────────────────
-# Since we now use termux-exec natively, we reduce the hacks.
-cat <<EOF > "$PREFIX/bin/moltis-fix-vscode"
+cat <<'EOF' > "$PREFIX/bin/moltis-fix-vscode"
 #!/usr/bin/env bash
+set -euo pipefail
+
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+ORANGE='\033[0;33m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+FORCE=0
+QUIET=0
+for arg in "$@"; do
+    case "$arg" in
+        --force) FORCE=1 ;;
+        --quiet) QUIET=1 ;;
+    esac
+done
+
+log() { [ "$QUIET" -eq 0 ] && echo -e "$@"; }
+
+# Ensure global node-pty is compiled for Bionic
 if ! npm ls -g node-pty >/dev/null 2>&1; then
-    echo "Installing global node-pty for Termux Bionic compatibility..."
+    log "${CYAN}Installing global node-pty for Termux Bionic compatibility...${NC}"
     npm install -g node-pty
 fi
-GLOBAL_PTY=\$(npm root -g)/node-pty/build/Release/pty.node
+GLOBAL_PTY=$(npm root -g)/node-pty/build/Release/pty.node
 
-for BASE_DIR in "\$HOME/.vscode-server/bin" "\$HOME/.antigravity-server/bin"; do
-    if [ -d "\$BASE_DIR" ]; then
-        echo "Healing Server for Android Bionic (\$BASE_DIR)..."
-        for dir in "\$BASE_DIR"/*; do
-            if [ -d "\$dir/bin" ] && [ -e "\$dir/node" ]; then
-                # Replace incompatible packaged node with a shim to native Bionic Node
-                if [ ! -f "\$dir/node.broken" ] && [ ! -L "\$dir/node" ]; then
-                    mv "\$dir/node" "\$dir/node.broken"
-                fi
-                rm -f "\$dir/node"
-                cat <<'WRAPPER' > "\$dir/node"
-#!/usr/bin/env bash
-export TMPDIR="\$PREFIX/tmp"
-export TMP="\$PREFIX/tmp"
-export TEMP="\$PREFIX/tmp"
-exec "\$PREFIX/bin/node" "\$@"
-WRAPPER
-                chmod +x "\$dir/node"
+PATCHED=0
 
-                # Replace bundled PTY bindings with our Bionic-compiled extension
-                PTY_DIR="\$dir/node_modules/node-pty/build/Release"
-                if [ -d "\$PTY_DIR" ]; then
-                    if [ -f "\$GLOBAL_PTY" ]; then
-                        if [ ! -f "\$PTY_DIR/pty.node.broken" ]; then
-                            echo "Patching node-pty.node for Termux Bionic..."
-                            mv "\$PTY_DIR/pty.node" "\$PTY_DIR/pty.node.broken"
-                            cp "\$GLOBAL_PTY" "\$PTY_DIR/pty.node"
-                        fi
-                    fi
-                fi
+for BASE_DIR in "$HOME/.vscode-server/bin" "$HOME/.antigravity-server/bin"; do
+    [ -d "$BASE_DIR" ] || continue
+    for dir in "$BASE_DIR"/*; do
+        [ -d "$dir" ] || continue
+
+        # Detect if this server commit has a node binary at all
+        NODE_BIN="$dir/node"
+        [ -e "$NODE_BIN" ] || [ -e "$dir/node.broken" ] || continue
+
+        # Check if node is still an ELF binary (unpatched) or already our bash wrapper
+        NEEDS_PATCH=0
+        if [ "$FORCE" -eq 1 ]; then
+            NEEDS_PATCH=1
+        elif [ -e "$NODE_BIN" ]; then
+            # file command: ELF = unpatched binary, script = already wrapped
+            if file "$NODE_BIN" 2>/dev/null | grep -qi "ELF"; then
+                NEEDS_PATCH=1
             fi
-        done
-    fi
+        else
+            # node was deleted but node.broken exists — re-create wrapper
+            NEEDS_PATCH=1
+        fi
+
+        if [ "$NEEDS_PATCH" -eq 1 ]; then
+            COMMIT_ID=$(basename "$dir")
+            log "${ORANGE}🔧 Patching server [$COMMIT_ID] for Android Bionic...${NC}"
+
+            # Backup the original glibc node binary
+            if [ -e "$NODE_BIN" ] && [ ! -f "$dir/node.broken" ]; then
+                mv "$NODE_BIN" "$dir/node.broken"
+            fi
+            rm -f "$NODE_BIN"
+
+            # Write Bionic-native node wrapper
+            cat <<'WRAPPER' > "$NODE_BIN"
+#!/usr/bin/env bash
+export TMPDIR="$PREFIX/tmp"
+export TMP="$PREFIX/tmp"
+export TEMP="$PREFIX/tmp"
+exec "$PREFIX/bin/node" "$@"
+WRAPPER
+            chmod +x "$NODE_BIN"
+            log "  ${GREEN}✓ Node wrapper installed (Termux Bionic node)${NC}"
+
+            PATCHED=$((PATCHED + 1))
+        fi
+
+        # Graft Bionic-compiled node-pty bindings
+        PTY_DIR="$dir/node_modules/node-pty/build/Release"
+        if [ -d "$PTY_DIR" ] && [ -f "$GLOBAL_PTY" ]; then
+            if [ "$FORCE" -eq 1 ] || [ ! -f "$PTY_DIR/pty.node.broken" ]; then
+                if [ -f "$PTY_DIR/pty.node" ] && [ ! -f "$PTY_DIR/pty.node.broken" ]; then
+                    mv "$PTY_DIR/pty.node" "$PTY_DIR/pty.node.broken"
+                fi
+                cp "$GLOBAL_PTY" "$PTY_DIR/pty.node"
+                log "  ${GREEN}✓ node-pty.node grafted (Bionic C++ bindings)${NC}"
+            fi
+        fi
+    done
 done
+
+if [ "$PATCHED" -gt 0 ]; then
+    log "${GREEN}✅ Patched $PATCHED server installation(s) for Android Bionic.${NC}"
+    log "${CYAN}   Restart your IDE to clear the orange PTY Host indicator.${NC}"
+elif [ "$QUIET" -eq 0 ]; then
+    log "${GREEN}✅ All server installations are already patched. No action needed.${NC}"
+fi
 EOF
 chmod +x "$PREFIX/bin/moltis-fix-vscode"
 
@@ -329,6 +384,21 @@ echo -e "\033[0;32mUpdate Complete! Please restart your services (moltis-stop &&
 EOF
 chmod +x "$PREFIX/bin/moltis-update"
 
+# ────────────────────────────────────────────────────────
+# Auto-Detect Hook: Catches new VS Code server updates
+# Runs silently on every SSH login via .bashrc
+# ────────────────────────────────────────────────────────
+BASHRC_HOOK='# Moltis Auto-Detect: Patch new VS Code/Antigravity server updates
+if command -v moltis-fix-vscode &>/dev/null; then
+    moltis-fix-vscode --quiet &
+fi'
+
+if ! grep -q "Moltis Auto-Detect" "$HOME/.bashrc" 2>/dev/null; then
+    echo "" >> "$HOME/.bashrc"
+    echo "$BASHRC_HOOK" >> "$HOME/.bashrc"
+    echo -e "${GREEN}✓ Auto-detect hook added to .bashrc${NC}"
+fi
+
 echo -e "\n${GREEN}Setup Complete! Native Bionic VPS is ready.${NC}"
 echo "--------------------------------------------------------"
 echo -e "  ${CYAN}moltis-up${NC}     Run AI + Git + Dashboard via runit"
@@ -336,4 +406,5 @@ echo -e "  ${CYAN}moltis-dev${NC}    Pro Mode (Stealth Mux + Mosh)"
 echo -e "  ${CYAN}moltis-update${NC} Update configuration & Fix VS Code"
 echo -e "  ${CYAN}moltis-stop${NC}   Kill all services"
 echo -e "  ${CYAN}sv status <app>${NC} Check service status"
+echo -e "  ${CYAN}tmux${NC}          Terminal multiplexer (SSH sessions)"
 echo "--------------------------------------------------------"
