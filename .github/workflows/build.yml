@@ -267,7 +267,7 @@ jobs:
         run: rustup target add aarch64-linux-android
 
       - name: Build Binary
-        run: cargo ndk -t arm64-v8a build -p moltis --release --no-default-features --features "file-watcher, metrics, prometheus, push-notifications, qmd, tailscale, tls, voice, web-ui"
+        run: cargo ndk -t arm64-v8a build -p moltis --release --no-default-features --features "agents, workflows, mcp, knowledge, file-watcher, metrics, prometheus, push-notifications, qmd, tailscale, tls, voice, web-ui"
 
       - name: Build Networking Tools
         run: |

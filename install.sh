@@ -135,6 +135,11 @@ mkdir -p "$PREFIX/var/log/sslh"
 mkdir -p "$PREFIX/var/service/moltis/log"
 cat <<'EOF' > "$PREFIX/var/service/moltis/run"
 #!/data/data/com.termux/files/usr/bin/sh
+export HOME="/data/data/com.termux/files/home"
+export PREFIX="/data/data/com.termux/files/usr"
+export SHELL="$PREFIX/bin/bash"
+export USER="$(whoami)"
+export PATH="$PREFIX/bin:$PREFIX/bin/applets:/system/bin:/system/xbin"
 export LD_PRELOAD=$PREFIX/lib/libtermux-exec.so
 export SSL_CERT_FILE="$PREFIX/etc/tls/cert.pem"
 exec 2>&1
@@ -150,6 +155,9 @@ chmod +x "$PREFIX/var/service/moltis/run" "$PREFIX/var/service/moltis/log/run"
 mkdir -p "$PREFIX/var/service/forgejo/log"
 cat <<'EOF' > "$PREFIX/var/service/forgejo/run"
 #!/data/data/com.termux/files/usr/bin/sh
+export HOME="/data/data/com.termux/files/home"
+export PREFIX="/data/data/com.termux/files/usr"
+export PATH="$PREFIX/bin:$PREFIX/bin/applets:/system/bin:/system/xbin"
 export LD_PRELOAD=$PREFIX/lib/libtermux-exec.so
 export FORGEJO_WORK_DIR="$HOME/forgejo-data"
 exec 2>&1
@@ -165,6 +173,9 @@ chmod +x "$PREFIX/var/service/forgejo/run" "$PREFIX/var/service/forgejo/log/run"
 mkdir -p "$PREFIX/var/service/caddy/log"
 cat <<'EOF' > "$PREFIX/var/service/caddy/run"
 #!/data/data/com.termux/files/usr/bin/sh
+export HOME="/data/data/com.termux/files/home"
+export PREFIX="/data/data/com.termux/files/usr"
+export PATH="$PREFIX/bin:$PREFIX/bin/applets:/system/bin:/system/xbin"
 export LD_PRELOAD=$PREFIX/lib/libtermux-exec.so
 exec 2>&1
 exec caddy run --config $HOME/.config/moltis/Caddyfile
@@ -179,6 +190,9 @@ chmod +x "$PREFIX/var/service/caddy/run" "$PREFIX/var/service/caddy/log/run"
 mkdir -p "$PREFIX/var/service/sslh/log"
 cat <<'EOF' > "$PREFIX/var/service/sslh/run"
 #!/data/data/com.termux/files/usr/bin/sh
+export HOME="/data/data/com.termux/files/home"
+export PREFIX="/data/data/com.termux/files/usr"
+export PATH="$PREFIX/bin:$PREFIX/bin/applets:/system/bin:/system/xbin"
 export LD_PRELOAD=$PREFIX/lib/libtermux-exec.so
 exec 2>&1
 exec sslh-fork --foreground --user u0_a123 --listen 0.0.0.0:4433 --ssh 127.0.0.1:8022 --http 127.0.0.1:3001
