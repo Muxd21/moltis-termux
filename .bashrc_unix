@@ -1,0 +1,25 @@
+export PATH="$HOME/.cargo/bin:$PATH"
+export PATH="/data/data/com.termux/files/home/.local/bin:$PATH"
+
+# >>> OpenClaw on Android >>>
+export TMPDIR="$PREFIX/tmp"
+export TMP="$TMPDIR"
+export TEMP="$TMPDIR"
+export CONTAINER=1
+export GYP_DEFINES="OS=linux android_ndk_path=$PREFIX"
+export CPATH="$PREFIX/include/glib-2.0:$PREFIX/lib/glib-2.0/include"
+# <<< OpenClaw on Android <<<
+
+# Patch VS Code/Antigravity node binaries for Termux
+for d in "$HOME/.vscode-server" "$HOME/.antigravity-server"; do
+  find "$d" -type f -name node -path '*/bin/*/node' 2>/dev/null | while read -r f; do
+    [ ! -L "$f" ] && ln -sf "$PREFIX/bin/node" "$f"
+  done
+done
+
+# Moltis Antigravity Terminal Environment
+export TERM=xterm-256color
+export COLORTERM=truecolor
+export PATH="$PREFIX/bin:$PATH"
+export SHELL="$PREFIX/bin/bash"
+export LD_PRELOAD="$PREFIX/lib/libtermux-exec.so"
