@@ -61,6 +61,13 @@ sed -i "s/__TERMUX_USER__/$(whoami)/" ~/.config/moltis/app.ini
 # Helper: The Node Healer (Essential for VS Code Remote)
 cat <<EOF > "$PREFIX/bin/moltis-fix-vscode"
 #!/usr/bin/env bash
+# 1) Install global node-pty for Android Bionic compatibility
+if ! npm ls -g node-pty >/dev/null 2>&1; then
+    echo "Installing global node-pty for Termux Bionic compatibility..."
+    npm install -g node-pty
+fi
+GLOBAL_PTY=\$(npm root -g)/node-pty/build/Release/pty.node
+
 for BASE_DIR in "\$HOME/.vscode-server/bin" "\$HOME/.antigravity-server/bin"; do
     if [ -d "\$BASE_DIR" ]; then
         echo "Healing Server for Android Bionic (\$BASE_DIR)..."
@@ -80,6 +87,18 @@ export TEMP="\$PREFIX/tmp"
 exec "\$PREFIX/bin/node" "\$@"
 WRAPPER
                 chmod +x "\$dir/node"
+
+                # --- APPLY PTY HOST FIX ---
+                PTY_DIR="\$dir/node_modules/node-pty/build/Release"
+                if [ -d "\$PTY_DIR" ]; then
+                    if [ -f "\$GLOBAL_PTY" ]; then
+                        if [ ! -f "\$PTY_DIR/pty.node.broken" ]; then
+                            echo "Patching node-pty.node for Termux Bionic..."
+                            mv "\$PTY_DIR/pty.node" "\$PTY_DIR/pty.node.broken"
+                            cp "\$GLOBAL_PTY" "\$PTY_DIR/pty.node"
+                        fi
+                    fi
+                fi
             fi
         done
     fi
