@@ -181,13 +181,6 @@ jobs:
           
           gh release create "${TAG}-termux" \
             --title "Moltis ${VERSION} (Termux Static Musl)" \
-            --notes "Static musl binary for Termux/Android ARM64
-            
-  - Built on ubuntu-24.04-arm (native ARM64)
-  - Statically linked (no external dependencies)
-  - Works in Termux without proot
-  - Compatible with Android Bionic libc
-  
-  Source: moltis-org/moltis@${TAG}" \
-            --target main \
+            --notes "Static musl binary for Termux/Android ARM64. Built on native ARM64 runners (ubuntu-24.04-arm). Statically linked with zero dependencies. Works in Termux without proot. Source: moltis-org/moltis@${TAG}" \
+            --target master \
             ./release-assets/*
