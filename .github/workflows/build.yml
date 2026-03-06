@@ -1,0 +1,128 @@
+name: Build Moltis for Termux (Native ARM64)
+
+on:
+  schedule:
+    - cron: '0 0,6,12,18 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Build without publishing"
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  build:
+    name: Build Static ARM64 Binary
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            musl-tools \
+            clang \
+            llvm \
+            cmake \
+            make \
+            pkg-config \
+            libssl-dev \
+            jq \
+            build-essential
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-unknown-linux-musl
+
+      - name: Check latest moltis release
+        id: check
+        run: |
+          LATEST=$(curl -s https://api.github.com/repos/moltis-org/moltis/releases/latest)
+          TAG=$(echo "$LATEST" | jq -r '.tag_name')
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          
+          # Force build if manual trigger
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+             echo "should_build=true" >> "$GITHUB_OUTPUT"
+          else
+             # Logic to skip if already built could go here, but 4x daily is fine for now
+             echo "should_build=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Clone Moltis Source
+        if: steps.check.outputs.should_build == 'true'
+        run: |
+          git clone --depth 1 --branch "${{ steps.check.outputs.tag }}" https://github.com/moltis-org/moltis.git moltis-src
+
+      - name: Pre-build WASM tools
+        if: steps.check.outputs.should_build == 'true'
+        run: |
+          cd moltis-src
+          rustup target add wasm32-wasip2
+          cargo build --target wasm32-wasip2 -p moltis-wasm-calc -p moltis-wasm-web-fetch -p moltis-wasm-web-search --release || echo "WASM build failed (optional)"
+          cargo run -p moltis-wasm-precompile --release || echo "Precompile failed (optional)"
+
+      - name: Build Static Binary
+        if: steps.check.outputs.should_build == 'true'
+        env:
+          CC: musl-gcc
+          CXX: g++
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER: musl-gcc
+          RUSTFLAGS: "-C target-feature=+crt-static"
+        run: |
+          cd moltis-src
+          # We need to ensure openssl uses the static version or vendored
+          # llama-cpp-v2 will use the defined CC/CXX
+          cargo build --release --target aarch64-unknown-linux-musl --bin moltis
+
+      - name: Package Artifact
+        if: steps.check.outputs.should_build == 'true'
+        run: |
+          cd moltis-src/target/aarch64-unknown-linux-musl/release
+          TAG="${{ steps.check.outputs.tag }}"
+          VERSION="${{ steps.check.outputs.version }}"
+          
+          mkdir -p moltis-pkg
+          cp moltis moltis-pkg/
+          chmod +x moltis-pkg/moltis
+          tar -czvf "moltis-${VERSION}-termux-arm64.tar.gz" moltis-pkg/
+          sha256sum "moltis-${VERSION}-termux-arm64.tar.gz" > "moltis-${VERSION}-termux-arm64.tar.gz.sha256"
+
+      - name: Upload to GitHub Release
+        if: steps.check.outputs.should_build == 'true' && github.event.inputs.dry_run != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.check.outputs.tag }}
+          VERSION: ${{ steps.check.outputs.version }}
+        run: |
+          cd moltis-src/target/aarch64-unknown-linux-musl/release
+          
+          # Delete existing release to refresh
+          if gh release view "${TAG}-termux" &>/dev/null; then
+            gh release delete "${TAG}-termux" --yes --cleanup-tag
+          fi
+          
+          gh release create "${TAG}-termux" \
+            --title "Moltis ${VERSION} (Termux Native ARM64)" \
+            --notes "Elite ARM64 build for Termux. 
+            - Built on: ubuntu-24.04-arm (Native)
+            - Linkage: Static Musl (Zero dependencies, No Proot needed)
+            - Upstream: moltis-org/moltis@${TAG}" \
+            --target master \
+            ./*.tar.gz*
