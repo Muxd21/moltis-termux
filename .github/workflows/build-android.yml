@@ -118,8 +118,10 @@ jobs:
           CXXFLAGS: "-DPOSIX_MADV_WILLNEED=MADV_WILLNEED -DPOSIX_MADV_RANDOM=MADV_RANDOM"
         run: |
           cd moltis-src
-          # Force API 26 to ensure posix_madvise and other modern symbols are available
-          cargo ndk -t aarch64-linux-android --android-platform 26 -- build --release -p moltis
+          # Ensure target is present for whatever toolchain this project uses
+          rustup target add aarch64-linux-android
+          # Use Environment Variable for platform to avoid CLI flag ambiguity
+          cargo ndk -t aarch64-linux-android build --release -p moltis
 
       - name: Create release archive
         run: |
