@@ -110,11 +110,16 @@ jobs:
           cargo run -p moltis-wasm-precompile --release || echo "WASM precompile skipped"
 
       - name: Build Android binary (Native Bionic)
+        env:
+          ANDROID_PLATFORM: 26
+          CARGO_NDK_ANDROID_PLATFORM: 26
+          # Define missing POSIX constants as their standard Android/Linux MADV equivalents
+          CFLAGS: "-DPOSIX_MADV_WILLNEED=MADV_WILLNEED -DPOSIX_MADV_RANDOM=MADV_RANDOM"
+          CXXFLAGS: "-DPOSIX_MADV_WILLNEED=MADV_WILLNEED -DPOSIX_MADV_RANDOM=MADV_RANDOM"
         run: |
           cd moltis-src
-          # Use Environment Variable for platform to avoid CLI flag ambiguity
-          # Use -- to separate cargo-ndk arguments from cargo arguments
-          CARGO_NDK_ANDROID_PLATFORM=24 cargo ndk -t aarch64-linux-android -- build --release -p moltis
+          # Force API 26 to ensure posix_madvise and other modern symbols are available
+          cargo ndk -t aarch64-linux-android --android-platform 26 -- build --release -p moltis
 
       - name: Create release archive
         run: |
