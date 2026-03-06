@@ -32,11 +32,11 @@ fi
 VERSION="${LATEST#v}"
 echo "Latest moltis version: ${VERSION}"
 
-# Download the musl binary
-DOWNLOAD_URL="https://github.com/Muxd21/moltisdroid/releases/download/${LATEST}-termux/moltis-${VERSION}-aarch64-unknown-linux-musl.tar.gz"
+# Download the bionic binary
+DOWNLOAD_URL="https://github.com/Muxd21/moltisdroid/releases/download/${LATEST}-termux/moltis-${VERSION}-aarch64-linux-android.tar.gz"
 echo -e "${YELLOW}Downloading from: $DOWNLOAD_URL${NC}"
 
-if ! curl -sL "$DOWNLOAD_URL" -o "moltis-${VERSION}-musl.tar.gz"; then
+if ! curl -sL "$DOWNLOAD_URL" -o "moltis-${VERSION}-android.tar.gz"; then
     echo -e "${RED}Error: Download failed${NC}"
     echo "Make sure the release exists at: https://github.com/Muxd21/moltisdroid/releases"
     exit 1
@@ -44,7 +44,7 @@ fi
 
 # Extract and install
 echo -e "${YELLOW}Extracting...${NC}"
-tar -xzf "moltis-${VERSION}-musl.tar.gz"
+tar -xzf "moltis-${VERSION}-android.tar.gz"
 
 echo -e "${YELLOW}Installing to $PREFIX/bin/moltis${NC}"
 chmod +x moltis-termux/moltis

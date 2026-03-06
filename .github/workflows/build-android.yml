@@ -1,4 +1,4 @@
-name: Build Musl Binary for Termux
+name: Build Moltis for Termux (Android Bionic)
 
 on:
   schedule:
@@ -39,7 +39,6 @@ jobs:
           LATEST_RELEASE=$(curl -s https://api.github.com/repos/moltis-org/moltis/releases/latest)
           
           LATEST_TAG=$(echo "$LATEST_RELEASE" | jq -r '.tag_name')
-          PUBLISHED_AT=$(echo "$LATEST_RELEASE" | jq -r '.published_at')
           
           # Get stored version from artifact or use empty string
           STORED_VERSION=""
@@ -48,13 +47,11 @@ jobs:
           fi
           
           echo "Latest tag: $LATEST_TAG"
-          echo "Published at: $PUBLISHED_AT"
           echo "Stored version: $STORED_VERSION"
           
           if [ "$LATEST_TAG" != "$STORED_VERSION" ] && [ "$LATEST_TAG" != "null" ]; then
             echo "has_new_release=true" >> "$GITHUB_OUTPUT"
             echo "release_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
-            # Remove 'v' prefix for version
             VERSION="${LATEST_TAG#v}"
             echo "release_version=$VERSION" >> "$GITHUB_OUTPUT"
             echo "$LATEST_TAG" > .stored_version
@@ -73,50 +70,54 @@ jobs:
           path: .stored_version
           retention-days: 30
 
-  build-musl:
-    name: Build aarch64-unknown-linux-musl
+  build-android:
+    name: Build aarch64-linux-android
     needs: check-release
     if: needs.check-release.outputs.has_new_release == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    container:
-      image: rust:alpine
     steps:
-      - name: Install dependencies
-        run: |
-          apk add --no-cache \
-            build-base \
-            musl-dev \
-            clang \
-            llvm \
-            cmake \
-            git \
-            openssl-dev \
-            pkgconfig \
-            curl \
-            jq \
-            bash \
-            gcompat
+      - name: Checkout moltisdroid
+        uses: actions/checkout@v4
 
-      - name: Install Rust musl target
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - name: Setup Android NDK
+        id: setup-ndk
+        uses: nndk/ndk-setup@v1
+        with:
+          version: r26b
+
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk
+
+      - name: Install system dependencies
         run: |
-          rustup target add aarch64-unknown-linux-musl
-          rustup toolchain install stable-aarch64-unknown-linux-musl
+          sudo apt-get update
+          sudo apt-get install -y clang llvm cmake pkg-config libssl-dev jq
 
       - name: Checkout moltis source at release tag
         env:
           RELEASE_TAG: ${{ needs.check-release.outputs.release_tag }}
         run: |
-          git clone --depth 1 --branch "$RELEASE_TAG" https://github.com/moltis-org/moltis.git moltis-src
+          # If tag is empty (workflow_dispatch run from master without new release), get latest
+          TAG=$RELEASE_TAG
+          if [ -z "$TAG" ] || [ "$TAG" == "null" ]; then
+            TAG=$(curl -s https://api.github.com/repos/moltis-org/moltis/releases/latest | jq -r '.tag_name')
+          fi
+          git clone --depth 1 --branch "$TAG" https://github.com/moltis-org/moltis.git moltis-src
           cd moltis-src
           git fetch --tags
-          git checkout "$RELEASE_TAG"
+          git checkout "$TAG"
 
       - name: Build Tailwind CSS
         run: |
           cd moltis-src
           curl -LO https://github.com/tailwindlabs/tailwindcss/releases/download/v3.4.17/tailwindcss-linux-x64
           chmod +x tailwindcss-linux-x64
-          cd crates/web/ui && TAILWINDCSS=../../../tailwindcss-linux-x64 ./build.sh || echo "Tailwind build skipped or failed"
+          cd crates/web/ui && TAILWINDCSS=../../../tailwindcss-linux-x64 ./build.sh || echo "Tailwind build skipped"
 
       - name: Build WASM components
         run: |
@@ -125,70 +126,70 @@ jobs:
           cargo build --target wasm32-wasip2 -p moltis-wasm-calc -p moltis-wasm-web-fetch -p moltis-wasm-web-search --release || echo "WASM build skipped"
           cargo run -p moltis-wasm-precompile --release || echo "WASM precompile skipped"
 
-      - name: Build musl binary
+      - name: Build Android binary
         env:
-          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER: clang
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
           cd moltis-src
-          # Build with musl target - static linking
-          cargo build --release --target aarch64-unknown-linux-musl --bin moltis
+          # Build with Android target using Bionic libc
+          cargo ndk -t aarch64-linux-android -p moltis --release
 
       - name: Verify binary
         run: |
           cd moltis-src
-          ls -lh target/aarch64-unknown-linux-musl/release/moltis
-          file target/aarch64-unknown-linux-musl/release/moltis
-          # Check it's statically linked
-          ldd target/aarch64-unknown-linux-musl/release/moltis 2>&1 || echo "Expected: statically linked or musl"
+          ls -lh target/aarch64-linux-android/release/moltis
+          file target/aarch64-linux-android/release/moltis
+          # Check it's linked against Bionic/Android libs
+          readelf -d target/aarch64-linux-android/release/moltis | grep "Shared library" || echo "Static or unknown"
 
       - name: Create release archive
         env:
           RELEASE_TAG: ${{ needs.check-release.outputs.release_tag }}
-          RELEASE_VERSION: ${{ needs.check-release.outputs.release_version }}
         run: |
-          cd moltis-src/target/aarch64-unknown-linux-musl/release
-          VERSION="${RELEASE_TAG#v}"
+          cd moltis-src/target/aarch64-linux-android/release
+          TAG=$RELEASE_TAG
+          if [ -z "$TAG" ] || [ "$TAG" == "null" ]; then
+             TAG=$(curl -s https://api.github.com/repos/moltis-org/moltis/releases/latest | jq -r '.tag_name')
+          fi
+          VERSION="${TAG#v}"
           mkdir -p moltis-termux
           cp moltis moltis-termux/
           chmod +x moltis-termux/moltis
-          tar -czvf "moltis-${VERSION}-aarch64-unknown-linux-musl.tar.gz" moltis-termux/
-          sha256sum "moltis-${VERSION}-aarch64-unknown-linux-musl.tar.gz" > "moltis-${VERSION}-aarch64-unknown-linux-musl.tar.gz.sha256"
+          tar -czvf "moltis-${VERSION}-aarch64-linux-android.tar.gz" moltis-termux/
+          sha256sum "moltis-${VERSION}-aarch64-linux-android.tar.gz" > "moltis-${VERSION}-aarch64-linux-android.tar.gz.sha256"
           ls -lh
 
-      - name: Upload musl binary artifact
+      - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
-          name: moltis-termux-aarch64-musl
-          path: moltis-src/target/aarch64-unknown-linux-musl/release/*.tar.gz*
+          name: moltis-termux-aarch64-android
+          path: moltis-src/target/aarch64-linux-android/release/*.tar.gz*
           retention-days: 30
 
   publish-release:
     name: Publish to GitHub Releases
-    needs: [check-release, build-musl]
+    needs: [check-release, build-android]
     if: |
       always() && 
-      needs.check-release.outputs.has_new_release == 'true' && 
-      needs.build-musl.result == 'success'
+      (needs.check-release.outputs.has_new_release == 'true' || github.event_name == 'workflow_dispatch') &&
+      needs.build-android.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Download musl binary
+      - name: Download binary
         uses: actions/download-artifact@v4
         with:
-          name: moltis-termux-aarch64-musl
+          name: moltis-termux-aarch64-android
           path: ./release-assets
-
-      - name: Download stored version
-        uses: actions/download-artifact@v4
-        with:
-          name: stored_version
-          path: ./
 
       - name: Get version info
         id: version
         run: |
           RELEASE_TAG="${{ needs.check-release.outputs.release_tag }}"
+          if [ -z "$RELEASE_TAG" ] || [ "$RELEASE_TAG" == "null" ]; then
+             RELEASE_TAG=$(curl -s https://api.github.com/repos/moltis-org/moltis/releases/latest | jq -r '.tag_name')
+          fi
           echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
           VERSION="${RELEASE_TAG#v}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
@@ -207,7 +208,7 @@ jobs:
           
           # Create new release
           gh release create "$RELEASE_TAG-termux" \
-            --title "Moltis $VERSION (Termux musl)" \
-            --notes "Pre-built musl binary for Termux (aarch64-unknown-linux-musl). This build is compatible with Termux on Android without requiring proot. Built from moltis-org/moltis release: $RELEASE_TAG" \
+            --title "Moltis $VERSION (Termux Android Bionic)" \
+            --notes "Native Android Bionic build for Termux (aarch64-linux-android). This build is linked against Android Bionic libc and runs natively in Termux with zero overhead. Built from moltis-org/moltis release: $RELEASE_TAG" \
             --target master \
             ./release-assets/*

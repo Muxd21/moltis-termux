@@ -1,10 +1,10 @@
 # Moltis Termux Build
 
-Automated builds of [moltis](https://github.com/moltis-org/moltis) for Termux on Android (aarch64-unknown-linux-musl).
+Automated builds of [moltis](https://github.com/moltis-org/moltis) for Termux on Android (aarch64-unknown-linux-Bionic).
 
 ## Why This Exists
 
-The official moltis releases ship binaries targeting `-unknown-linux-gnu` (glibc), which are incompatible with Termux's Bionic libc. This repository automatically builds static musl binaries that work natively in Termux without requiring proot or chroot.
+The official moltis releases ship binaries targeting `-unknown-linux-gnu` (glibc), which are incompatible with Termux's Bionic libc. This repository automatically builds native Bionic binaries that work natively in Termux without requiring proot or chroot.
 
 ## Installation
 
@@ -16,11 +16,11 @@ LATEST=$(curl -s https://api.github.com/repos/moltis-org/moltis/releases/latest 
 VERSION="${LATEST#v}"
 
 # Download and install
-curl -LO "https://github.com/Muxd21/moltisdroid/releases/download/${LATEST}-termux/moltis-${VERSION}-aarch64-unknown-linux-musl.tar.gz"
-tar -xzf "moltis-${VERSION}-aarch64-unknown-linux-musl.tar.gz"
+curl -LO "https://github.com/Muxd21/moltisdroid/releases/download/${LATEST}-termux/moltis-${VERSION}-aarch64-linux-android.tar.gz"
+tar -xzf "moltis-${VERSION}-aarch64-linux-android.tar.gz"
 chmod +x moltis-termux/moltis
 mv moltis-termux/moltis $PREFIX/bin/moltis
-rm -rf moltis-termux "moltis-${VERSION}-aarch64-unknown-linux-musl.tar.gz"
+rm -rf moltis-termux "moltis-${VERSION}-aarch64-linux-android.tar.gz"
 ```
 
 ### Quick Install (Latest)
@@ -39,7 +39,7 @@ moltis --help
 
 ## Build Schedule
 
-This repository checks for new releases from [moltis-org/moltis](https://github.com/moltis-org/moltis) **4 times a day** (at 00:00, 06:00, 12:00, and 18:00 UTC) and automatically builds new musl binaries when a new release is detected.
+This repository checks for new releases from [moltis-org/moltis](https://github.com/moltis-org/moltis) **4 times a day** (at 00:00, 06:00, 12:00, and 18:00 UTC) and automatically builds new Bionic binaries when a new release is detected.
 
 ## Manual Trigger
 
@@ -47,9 +47,9 @@ You can manually trigger a build using the "Run workflow" button on the [Actions
 
 ## Binary Details
 
-- **Target**: `aarch64-unknown-linux-musl`
-- **Linking**: Static (no external dependencies)
-- **Compatibility**: Termux on Android (ARM64), Alpine Linux, any musl-based system
+- **Target**: `aarch64-unknown-linux-Bionic`
+- **Linking**: native (no external dependencies)
+- **Compatibility**: Termux on Android (ARM64), Alpine Linux, any Bionic-based system
 
 ## Troubleshooting
 

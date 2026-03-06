@@ -1,6 +1,6 @@
 # Moltis Termux - Setup Guide
 
-This repository provides automated musl builds of moltis for Termux on Android.
+This repository provides automated Bionic builds of moltis for Termux on Android.
 
 ## Quick Start
 
@@ -11,11 +11,11 @@ This repository provides automated musl builds of moltis for Termux on Android.
 
 ### Step 2: Copy the Workflow
 
-Copy the `.github/workflows/build-musl.yml` file to your repository.
+Copy the `.github/workflows/build-android.yml` file to your repository.
 
 ### Step 3: Update the Workflow
 
-In `build-musl.yml`, update the release creation step to use your username:
+In `build-android.yml`, update the release creation step to use your username:
 
 ```yaml
 # Change YOUR_USERNAME to your GitHub username
@@ -31,7 +31,7 @@ In `build-musl.yml`, update the release creation step to use your username:
 
 You can manually trigger a build:
 1. Go to **Actions** tab
-2. Select "Build Musl Binary for Termux"
+2. Select "Build Bionic Binary for Termux"
 3. Click "Run workflow"
 4. Select branch (main)
 5. Click "Run workflow"
@@ -50,8 +50,8 @@ After a successful build, install in Termux with:
 # One-liner
 LATEST=$(curl -s https://api.github.com/repos/moltis-org/moltis/releases/latest | jq -r '.tag_name')
 VERSION="${LATEST#v}"
-curl -LO "https://github.com/Muxd21/moltisdroid/releases/download/${LATEST}-termux/moltis-${VERSION}-aarch64-unknown-linux-musl.tar.gz"
-tar -xzf "moltis-${VERSION}-aarch64-unknown-linux-musl.tar.gz"
+curl -LO "https://github.com/Muxd21/moltisdroid/releases/download/${LATEST}-termux/moltis-${VERSION}-aarch64-unknown-linux-Bionic.tar.gz"
+tar -xzf "moltis-${VERSION}-aarch64-unknown-linux-Bionic.tar.gz"
 chmod +x moltis-termux/moltis
 mv moltis-termux/moltis $PREFIX/bin/moltis
 ```
@@ -60,7 +60,7 @@ mv moltis-termux/moltis $PREFIX/bin/moltis
 
 ### Change Build Schedule
 
-Edit the cron expression in `.github/workflows/build-musl.yml`:
+Edit the cron expression in `.github/workflows/build-android.yml`:
 
 ```yaml
 on:
@@ -76,8 +76,8 @@ Add additional targets to the build matrix:
 strategy:
   matrix:
     target:
-      - aarch64-unknown-linux-musl
-      - x86_64-unknown-linux-musl  # Add this for x86_64
+      - aarch64-unknown-linux-Bionic
+      - x86_64-unknown-linux-Bionic  # Add this for x86_64
 ```
 
 ## Troubleshooting
