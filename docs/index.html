@@ -1,22 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Claw-Mission | Advanced AI Orchestration Stack</title>
+    <title>Moltis | Android AI Hub</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
     <style>
         :root {
-            --bg-color: #050505;
-            --card-bg: rgba(20, 20, 20, 0.7);
-            --accent-primary: #00f2ff;
-            --accent-secondary: #7000ff;
-            --text-main: #e0e0e0;
-            --text-muted: #888;
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --success: #00ff88;
+            --bg: #030303;
+            --surface: rgba(15, 15, 18, 0.8);
+            --accent: #ff2d55;
+            --accent-glow: rgba(255, 45, 85, 0.4);
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1aa;
+            --border: rgba(255, 255, 255, 0.08);
+            --success: #00ffca;
         }
 
         * {
@@ -26,416 +29,450 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            line-height: 1.6;
-            overflow-x: hidden;
-            background: radial-gradient(circle at top right, #1a0b3a 0%, #050505 60%);
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-primary);
             min-height: 100vh;
+            background-image:
+                radial-gradient(circle at 20% 20%, #1a0808 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, #08081a 0%, transparent 40%);
+            overflow-x: hidden;
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 40px 20px;
         }
 
+        /* Hero */
         header {
             text-align: center;
-            margin-bottom: 60px;
-            animation: fadeInDown 1s ease-out;
+            margin-bottom: 50px;
+        }
+
+        .logo-wrap {
+            margin-bottom: 20px;
+            display: inline-block;
+            position: relative;
+        }
+
+        .m-logo {
+            font-size: 4rem;
+            font-weight: 800;
+            background: linear-gradient(to bottom, #fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -2px;
         }
 
         h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 3rem;
-            letter-spacing: 4px;
-            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-            text-transform: uppercase;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            letter-spacing: -1px;
         }
 
-        .tagline {
-            font-size: 1.1rem;
-            color: var(--text-muted);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        .status-badge {
+        .status-pill {
             display: inline-flex;
             align-items: center;
-            background: rgba(0, 255, 136, 0.1);
+            gap: 8px;
+            background: rgba(0, 255, 202, 0.1);
             color: var(--success);
-            padding: 5px 15px;
-            border-radius: 20px;
+            padding: 6px 16px;
+            border-radius: 100px;
             font-size: 0.8rem;
             font-weight: 600;
-            border: 1px solid rgba(0, 255, 136, 0.3);
-            margin-top: 20px;
+            border: 1px solid rgba(0, 255, 202, 0.2);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background-color: var(--success);
+        .dot {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
             border-radius: 50%;
-            margin-right: 8px;
-            box-shadow: 0 0 10px var(--success);
-            animation: pulse 2s infinite;
+            box-shadow: 0 0 8px var(--success);
         }
 
-        .ip-config {
-            background: var(--card-bg);
-            backdrop-filter: blur(15px);
-            border: 1px solid var(--glass-border);
-            padding: 30px;
-            border-radius: 20px;
+        /* Tailscale Helper */
+        .ts-helper {
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            padding: 25px;
+            border-radius: 24px;
             margin-bottom: 40px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        .ip-config h3 {
-            margin-bottom: 15px;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1rem;
-            color: var(--accent-primary);
-        }
-
-        .input-group {
             display: flex;
-            gap: 10px;
-            max-width: 400px;
-            margin: 0 auto;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .ts-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        .ts-info p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .ip-input-wrap {
+            flex: 0 0 300px;
+            position: relative;
         }
 
         input {
-            flex: 1;
+            width: 100%;
             background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
+            border: 1px solid var(--border);
             padding: 12px 20px;
-            border-radius: 10px;
+            border-radius: 12px;
             color: white;
-            font-family: monospace;
-            font-size: 1.1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
             outline: none;
-            transition: border-color 0.3s;
+            transition: all 0.3s;
         }
 
         input:focus {
-            border-color: var(--accent-primary);
+            border-color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
         }
 
-        .card-grid {
+        /* Grid */
+        .grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 25px;
             margin-bottom: 40px;
         }
 
         .card {
-            background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            padding: 30px;
-            border-radius: 24px;
-            transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
-            position: relative;
-            overflow: hidden;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 35px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: flex;
             flex-direction: column;
+            position: relative;
+            overflow: hidden;
         }
 
         .card:hover {
-            transform: translateY(-5px);
-            border-color: rgba(0, 242, 255, 0.3);
-            box-shadow: 0 15px 40px rgba(0, 242, 255, 0.1);
+            transform: translateY(-8px);
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(25, 25, 28, 0.9);
         }
 
-        .card-icon {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
+        .icon-circle {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 25px;
         }
 
         .card h2 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             margin-bottom: 15px;
-            color: white;
         }
 
         .card p {
-            color: var(--text-muted);
+            color: var(--text-secondary);
             font-size: 0.95rem;
-            margin-bottom: 20px;
-            flex-grow: 1;
+            margin-bottom: 25px;
+            line-height: 1.6;
         }
 
-        .btn {
-            display: inline-block;
-            padding: 12px 25px;
-            border-radius: 12px;
-            text-decoration: none;
+        .tag-list {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: auto;
+            margin-bottom: 25px;
+        }
+
+        .tag {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
             font-weight: 600;
+            color: #ddd;
+        }
+
+        .btn-action {
+            display: block;
+            background: var(--text-primary);
+            color: #000;
             text-align: center;
-            transition: filter 0.3s, transform 0.2s;
-            cursor: pointer;
-            border: none;
+            padding: 14px;
+            border-radius: 14px;
+            text-decoration: none;
+            font-weight: 700;
+            transition: all 0.3s;
         }
 
-        .btn-primary {
-            background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
-            color: white;
-            box-shadow: 0 4px 15px rgba(112, 0, 255, 0.3);
-        }
-
-        .btn:hover {
-            filter: brightness(1.2);
+        .btn-action:hover {
+            filter: invert(1);
             transform: scale(1.02);
         }
 
-        .details {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid var(--glass-border);
-            font-size: 0.85rem;
-        }
-
-        .details span {
-            display: block;
-            margin-bottom: 5px;
-            color: var(--text-muted);
-        }
-
-        .details b {
-            color: var(--text-main);
-        }
-
-        .infrastructure {
-            background: var(--card-bg);
+        /* Infra */
+        .infra-panel {
+            background: linear-gradient(135deg, #111, #080808);
+            border: 1px solid var(--border);
+            border-radius: 30px;
             padding: 40px;
-            border-radius: 24px;
-            border: 1px solid var(--glass-border);
-            margin-bottom: 40px;
         }
 
-        .infra-header {
+        .section-header {
             display: flex;
             align-items: center;
-            margin-bottom: 25px;
             gap: 15px;
+            margin-bottom: 30px;
         }
 
-        .infra-header h2 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.5rem;
+        .section-header h2 {
+            font-size: 1.4rem;
+            letter-spacing: -0.5px;
         }
 
-        .code-box {
+        .terminal {
             background: #000;
-            padding: 20px;
-            border-radius: 12px;
-            font-family: 'Courier New', Courier, monospace;
-            border: 1px solid #333;
-            margin-bottom: 20px;
+            padding: 25px;
+            border-radius: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            border: 1px solid #222;
+            margin-bottom: 30px;
             position: relative;
         }
 
-        .code-box code {
-            color: var(--success);
-            display: block;
-            word-break: break-all;
-        }
-
-        .copy-hint {
+        .terminal-header {
             position: absolute;
             top: 10px;
             right: 15px;
-            font-size: 10px;
-            text-transform: uppercase;
-            color: #555;
+            display: flex;
+            gap: 6px;
         }
 
-        .stats-grid {
+        .t-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #333;
+        }
+
+        code {
+            color: var(--success);
+            font-size: 1.1rem;
+        }
+
+        .cmd-label {
+            color: #555;
+            display: block;
+            font-size: 0.7rem;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .stats-row {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            margin-top: 25px;
+            gap: 20px;
         }
 
-        .stat-item {
-            text-align: center;
-            padding: 15px;
-            background: rgba(255,255,255,0.02);
-            border-radius: 15px;
-            border: 1px solid var(--glass-border);
+        .stat-box {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 20px;
+            border-radius: 18px;
+            border: 1px solid var(--border);
         }
 
-        .stat-label {
+        .stat-box .label {
             font-size: 0.7rem;
-            color: var(--text-muted);
+            color: var(--text-secondary);
             text-transform: uppercase;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
         }
 
-        .stat-value {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.9rem;
-            color: var(--accent-primary);
+        .stat-box .val {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
         }
 
         footer {
+            margin-top: 60px;
             text-align: center;
             padding: 40px;
-            color: var(--text-muted);
+            color: #444;
             font-size: 0.8rem;
-            letter-spacing: 1px;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.2); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
+            border-top: 1px solid var(--border);
         }
 
         @media (max-width: 768px) {
-            .card-grid { grid-template-columns: 1fr; }
-            .stats-grid { grid-template-columns: 1fr 1fr; }
-            h1 { font-size: 2rem; }
+            .ts-helper {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+
+            .ip-input-wrap {
+                flex: none;
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr 1fr;
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header>
-            <div class="tagline">Claw-Mission</div>
-            <h1>Elite AI Stack</h1>
-            <div class="status-badge">
-                <div class="status-dot"></div>
-                System Operational &bull; Cloud Interface
+            <div class="logo-wrap">
+                <div class="m-logo">Moltis</div>
+            </div>
+            <h1>Android AI Node</h1>
+            <div class="status-pill">
+                <div class="dot"></div>
+                Termux Native Bionic
             </div>
         </header>
 
-        <section class="ip-config">
-            <h3>🌐 Connect via Tailscale</h3>
-            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">
-                Enter your Android/Termux Tailscale IP to dynamicly route dashboard links.
-            </p>
-            <div class="input-group">
-                <input type="text" id="tailscale-ip" placeholder="100.x.x.x" value="100.76.136.73">
+        <section class="ts-helper">
+            <div class="ts-info">
+                <h3>🌐 Tailscale Remote Access</h3>
+                <p>Sync your phone's unique IP to route commands from anywhere.</p>
+            </div>
+            <div class="ip-input-wrap">
+                <input type="text" id="ts-ip" placeholder="100.x.x.x" value="100.76.136.73">
             </div>
         </section>
 
-        <div class="card-grid">
-            <!-- Mission Control -->
+        <div class="grid">
+            <!-- Moltis Dashboard -->
             <div class="card">
-                <div class="card-icon">🛸</div>
-                <h2>Mission Control</h2>
-                <p>Elite agent orchestration dashboard. Track tasks, manage skills, and oversee your AI fleet from a single glass pane.</p>
-                <div class="details">
-                    <span>Login: <b>admin</b></span>
-                    <span>Port: <b>3000</b></span>
+                <div class="icon-circle">🧠</div>
+                <h2>Moltis Dashboard</h2>
+                <p>The central nervous system. Manage agent memory, tool-use protocols, and monitor live AI reasoning
+                    cycles.</p>
+                <div class="tag-list">
+                    <div class="tag">Port 3000</div>
+                    <div class="tag">WebUI</div>
+                    <div class="tag">Agentic</div>
                 </div>
-                <br>
-                <a href="#" id="link-mission" target="_blank" class="btn btn-primary">Enter Control Deck</a>
+                <a href="#" id="moltis-dash" target="_blank" class="btn-action">Enter Dashboard</a>
             </div>
 
-            <!-- OpenClaw Gateway -->
+            <!-- Moltis API/Gateway -->
             <div class="card">
-                <div class="card-icon">🦞</div>
-                <h2>OpenClaw Gateway</h2>
-                <p>Unified AI agent gateway. High-performance model federation with secure token-based authentication.</p>
-                <div class="details">
-                    <span>Auth: <b>Token Based</b></span>
-                    <span>Port: <b>18789</b></span>
+                <div class="icon-circle">🔌</div>
+                <h2>Moltis Gateway</h2>
+                <p>High-speed API interface for third-party integrations. Unified endpoint for local LLM orchestration.
+                </p>
+                <div class="tag-list">
+                    <div class="tag">Port 18789</div>
+                    <div class="tag">API</div>
+                    <div class="tag">JSON-RPC</div>
                 </div>
-                <br>
-                <a href="#" id="link-gateway" target="_blank" class="btn btn-primary" style="background: linear-gradient(45deg, #ff4d4d, #f0932b);">Open Gateway UI</a>
+                <a href="#" id="moltis-api" target="_blank" class="btn-action"
+                    style="background:#222; color:#fff; border:1px solid #444;">Access Gateway</a>
             </div>
         </div>
 
-        <section class="infrastructure">
-            <div class="infra-header">
-                <div style="font-size: 1.5rem;">🚀</div>
-                <h2>One-Command Launch</h2>
+        <section class="infra-panel">
+            <div class="section-header">
+                <span>🛸</span>
+                <h2>One-Tap Deployment</h2>
             </div>
-            <p style="margin-bottom: 15px; font-size: 0.9rem;">Start your entire stack (Bridges, SSH, and AI Services) from Termux:</p>
-            <div class="code-box">
-                <span class="copy-hint">Executable</span>
+
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="t-dot"></div>
+                    <div class="t-dot"></div>
+                    <div class="t-dot"></div>
+                </div>
+                <span class="cmd-label">Termux Command</span>
                 <code>./claw.sh</code>
             </div>
 
-            <div class="infra-header" style="margin-top: 40px;">
-                <div style="font-size: 1.5rem;">💻</div>
-                <h2>Infrastructure Access</h2>
-            </div>
-            <div class="code-box">
-                <span class="copy-hint">Terminal Command</span>
-                <code id="ssh-cmd">ssh -p 2222 root@100.76.136.73</code>
+            <div class="section-header" style="margin-top: 40px;">
+                <span>💻</span>
+                <h2>Secure Shell Interface</h2>
             </div>
 
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-label">Environment</div>
-                    <div class="stat-value">Termux Native</div>
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="t-dot"></div>
+                    <div class="t-dot"></div>
+                    <div class="t-dot"></div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-label">Architecture</div>
-                    <div class="stat-value">AArch64</div>
+                <span class="cmd-label">Remote Console</span>
+                <code id="ssh-val">ssh -p 2222 root@100.76.136.73</code>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-box">
+                    <div class="label">Architecture</div>
+                    <div class="val">AArch64</div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-label">SSH User</div>
-                    <div class="stat-value">root : root</div>
+                <div class="stat-box">
+                    <div class="label">Library</div>
+                    <div class="val">Bionic (Native)</div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-label">Gateway</div>
-                    <div class="stat-value">Token Sec</div>
+                <div class="stat-box">
+                    <div class="label">SSH Creds</div>
+                    <div class="val">root / root</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Environment</div>
+                    <div class="val">Android Node</div>
                 </div>
             </div>
         </section>
 
         <footer>
-            &copy; 2026 BMHQ / Muxd21<br>
-            Powered by OpenClaw & Mission Control &bull; Powered by Moltis
+            &copy; 2026 Muxd21 &bull; Built for the Moltis Ecosystem<br>
+            Powered by Android Native Technology
         </footer>
     </div>
 
     <script>
-        const ipInput = document.getElementById('tailscale-ip');
-        const linkMission = document.getElementById('link-mission');
-        const linkGateway = document.getElementById('link-gateway');
-        const sshCmd = document.getElementById('ssh-cmd');
+        const ipIn = document.getElementById('ts-ip');
+        const dashLnk = document.getElementById('moltis-dash');
+        const apiLnk = document.getElementById('moltis-api');
+        const sshTxt = document.getElementById('ssh-val');
 
-        function updateLinks() {
-            const ip = ipInput.value.trim() || '100.76.136.73';
-            linkMission.href = `http://${ip}:3000`;
-            linkGateway.href = `http://${ip}:18789`;
-            sshCmd.innerText = `ssh -p 2222 root@${ip}`;
-            
-            // Save to local storage for persistence
-            localStorage.setItem('tailscale_ip', ip);
+        function sync() {
+            const ip = ipIn.value.trim() || '100.76.136.73';
+            dashLnk.href = `http://${ip}:3000`;
+            apiLnk.href = `http://${ip}:18789`;
+            sshTxt.innerText = `ssh -p 2222 root@${ip}`;
+            localStorage.setItem('m_ip', ip);
         }
 
-        // Listen for input
-        ipInput.addEventListener('input', updateLinks);
+        ipIn.addEventListener('input', sync);
 
-        // Load saved IP
-        const savedIp = localStorage.getItem('tailscale_ip');
-        if (savedIp) {
-            ipInput.value = savedIp;
+        const cached = localStorage.getItem('m_ip');
+        if (cached) {
+            ipIn.value = cached;
         }
 
-        // Initial update
-        updateLinks();
+        sync();
     </script>
 </body>
+
 </html>
