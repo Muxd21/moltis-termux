@@ -1,0 +1,16 @@
+# Build artifacts
+target/
+*.tar.gz
+*.sha256
+
+# Stored version
+.stored_version
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp

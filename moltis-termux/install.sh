@@ -7,7 +7,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 echo -e "${GREEN}Moltis Termux Installer${NC}"
-echo "========================"
+echo "================================"
 
 if [ ! -d "$PREFIX" ]; then
     echo -e "${RED}Error: Run this in Termux${NC}"
@@ -26,23 +26,24 @@ fi
 VERSION="${LATEST#v}"
 echo "Latest moltis version: ${VERSION}"
 
-DOWNLOAD_URL="https://github.com/YOUR_USERNAME/moltis-termux/releases/download/${LATEST}-termux/moltis-${VERSION}-linux-arm64.tar.gz"
+DOWNLOAD_URL="https://github.com/Muxd21/moltis-termux/releases/download/${LATEST}-termux/moltis-${VERSION}-musl-arm64.tar.gz"
 echo -e "${YELLOW}Downloading...${NC}"
 
-if ! curl -sL "$DOWNLOAD_URL" -o "moltis-${VERSION}-arm64.tar.gz"; then
+if ! curl -sL "$DOWNLOAD_URL" -o "moltis-${VERSION}-musl-arm64.tar.gz"; then
     echo -e "${RED}Error: Download failed${NC}"
-    echo "Check: https://github.com/YOUR_USERNAME/moltis-termux/releases"
+    echo "Check: https://github.com/Muxd21/moltis-termux/releases"
     exit 1
 fi
 
 echo -e "${YELLOW}Installing...${NC}"
-tar -xzf "moltis-${VERSION}-arm64.tar.gz"
+tar -xzf "moltis-${VERSION}-musl-arm64.tar.gz"
 chmod +x moltis-termux/moltis
 mv moltis-termux/moltis "$PREFIX/bin/moltis"
-rm -rf moltis-termux "moltis-${VERSION}-arm64.tar.gz"
+rm -rf moltis-termux "moltis-${VERSION}-musl-arm64.tar.gz"
 
 if command -v moltis &> /dev/null; then
     echo -e "${GREEN}✓ Installation successful!${NC}"
+    echo ""
     echo "Run 'moltis --help' to get started"
 else
     echo -e "${RED}✗ Installation failed${NC}"

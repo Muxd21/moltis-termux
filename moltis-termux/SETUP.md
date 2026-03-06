@@ -35,9 +35,10 @@ Go to **Actions** → Select workflow → "Run workflow"
 │                      ↓                                  │
 │  Clone source at release tag                           │
 │                      ↓                                  │
-│  Build on ubuntu-24.04-arm (native ARM64)              │
+│  Build on alpine container (ARM64 runner)              │
+│  Target: aarch64-unknown-linux-musl                    │
 │                      ↓                                  │
-│  Create GitHub Release with binary                     │
+│  Create GitHub Release with static binary              │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -52,10 +53,18 @@ bash <(curl -sL https://raw.githubusercontent.com/YOUR_USERNAME/moltis-termux/ma
 
 | Item | Value |
 |------|-------|
-| **Runner** | ubuntu-24.04-arm (GitHub ARM64) |
-| **Target** | aarch64-unknown-linux-gnu |
-| **Compatibility** | Termux, Android, Linux ARM64 |
-| **Schedule** | 00:00, 12:00 UTC |
+| **Runner** | ubuntu-24.04-arm (native ARM64) |
+| **Container** | Alpine Linux |
+| **Target** | aarch64-unknown-linux-musl |
+| **Linking** | Static (no dependencies) |
+| **Schedule** | 00:00, 06:00, 12:00, 18:00 UTC |
+
+## Why This Works
+
+- **Native ARM64 runner** - No emulation, fast builds
+- **Static musl** - Bundles libc, compatible with Android Bionic
+- **No NDK needed** - Avoids Android toolchain complexity
+- **Zero dependencies** - Works out of the box in Termux
 
 ## Troubleshooting
 
@@ -63,7 +72,7 @@ bash <(curl -sL https://raw.githubusercontent.com/YOUR_USERNAME/moltis-termux/ma
 
 **Release not created:** Enable workflow write permissions
 
-**Binary won't run:** Ensure ARM64 device, check `ldd` for missing libs
+**Binary won't run:** Ensure ARM64 device (`uname -m` should show `aarch64`)
 
 ## License
 
