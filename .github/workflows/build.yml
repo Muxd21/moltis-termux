@@ -83,6 +83,7 @@ jobs:
         env:
           CC: musl-gcc
           CXX: g++
+          OPENSSL_STATIC: 1
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER: musl-gcc
           RUSTFLAGS: "-C target-feature=+crt-static"
         run: |
