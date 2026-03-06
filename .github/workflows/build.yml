@@ -100,11 +100,16 @@ jobs:
           TAG="${{ steps.check.outputs.tag }}"
           VERSION="${{ steps.check.outputs.version }}"
           
-          mkdir -p moltis-pkg
-          cp moltis moltis-pkg/
-          chmod +x moltis-pkg/moltis
-          tar -czvf "moltis-${VERSION}-termux-arm64.tar.gz" moltis-pkg/
-          sha256sum "moltis-${VERSION}-termux-arm64.tar.gz" > "moltis-${VERSION}-termux-arm64.tar.gz.sha256"
+          mkdir -p moltis-termux
+          cp moltis moltis-termux/
+          chmod +x moltis-termux/moltis
+          
+          # Versioned archive for install.sh
+          tar -czvf "moltis-${VERSION}-musl-arm64.tar.gz" moltis-termux/
+          # Version-less archive for README one-liner
+          cp "moltis-${VERSION}-musl-arm64.tar.gz" "moltis-musl-arm64.tar.gz"
+          
+          sha256sum "moltis-${VERSION}-musl-arm64.tar.gz" > "moltis-${VERSION}-musl-arm64.tar.gz.sha256"
 
       - name: Upload to GitHub Release
         if: steps.check.outputs.should_build == 'true' && github.event.inputs.dry_run != 'true'
@@ -122,9 +127,6 @@ jobs:
           
           gh release create "${TAG}-termux" \
             --title "Moltis ${VERSION} (Termux Native ARM64)" \
-            --notes "Elite ARM64 build for Termux. 
-            - Built on: ubuntu-24.04-arm (Native)
-            - Linkage: Static Musl (Zero dependencies, No Proot needed)
-            - Upstream: moltis-org/moltis@${TAG}" \
+            --notes "Static musl binary for Termux. Zero dependencies. Source: moltis-org/moltis@${TAG}" \
             --target master \
             ./*.tar.gz*
