@@ -175,11 +175,11 @@ jobs:
           TAG: ${{ steps.version.outputs.release_tag }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          if gh release view "${TAG}-termux" &>/dev/null; then
-            gh release delete "${TAG}-termux" --yes --cleanup-tag
+          if gh release view "${TAG}-static" &>/dev/null; then
+            gh release delete "${TAG}-static" --yes --cleanup-tag
           fi
           
-          gh release create "${TAG}-termux" \
+          gh release create "${TAG}-static" \
             --title "Moltis ${VERSION} (Termux Static Musl)" \
             --notes "Static musl binary for Termux/Android ARM64. Built on native ARM64 runners (ubuntu-24.04-arm). Statically linked with zero dependencies. Works in Termux without proot. Source: moltis-org/moltis@${TAG}" \
             --target master \

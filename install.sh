@@ -41,7 +41,7 @@ echo -e "${CYAN}🔍 Scanning for latest Bionic payload...${NC}"
 LATEST=$(curl -s https://api.github.com/repos/moltis-org/moltis/releases/latest | jq -r '.tag_name')
 VERSION="${LATEST#v}"
 
-DOWNLOAD_URL="https://github.com/Muxd21/moltisdroid/releases/download/${LATEST}-termux/moltis-${VERSION}-aarch64-linux-android.tar.gz"
+DOWNLOAD_URL="https://github.com/Muxd21/moltisdroid/releases/download/${LATEST}-android/moltis-${VERSION}-aarch64-linux-android.tar.gz"
 
 echo -e "${CYAN}📥 Downloading:${NC} ${WHITE}moltis-v${VERSION}-android-bionic${NC}"
 if ! curl -sL "$DOWNLOAD_URL" -o "moltis-stack.tar.gz"; then

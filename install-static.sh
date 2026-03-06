@@ -26,7 +26,7 @@ fi
 VERSION="${LATEST#v}"
 echo "Latest moltis version: ${VERSION}"
 
-DOWNLOAD_URL="https://github.com/Muxd21/moltisdroid/releases/download/${LATEST}-termux/moltis-${VERSION}-musl-arm64.tar.gz"
+DOWNLOAD_URL="https://github.com/Muxd21/moltisdroid/releases/download/${LATEST}-static/moltis-${VERSION}-musl-arm64.tar.gz"
 echo -e "${YELLOW}Downloading...${NC}"
 
 if ! curl -sL "$DOWNLOAD_URL" -o "moltis-${VERSION}-musl-arm64.tar.gz"; then

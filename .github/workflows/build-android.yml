@@ -166,11 +166,11 @@ jobs:
           fi
           VERSION="${TAG#v}"
           
-          if gh release view "$TAG-termux" &>/dev/null; then
-            gh release delete "$TAG-termux" --yes --cleanup-tag
+          if gh release view "$TAG-android" &>/dev/null; then
+            gh release delete "$TAG-android" --yes --cleanup-tag
           fi
           
-          gh release create "$TAG-termux" \
+          gh release create "$TAG-android" \
             --title "Moltis $VERSION (Termux Android Bionic)" \
             --notes "Elite Native ARM64 build for Termux (aarch64-linux-android). Built on native ARM64 runners for peak performance and zero linkage overhead. Built from moltis-org/moltis release: $TAG" \
             --target master \
