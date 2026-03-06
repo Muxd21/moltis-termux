@@ -16,7 +16,7 @@ LATEST=$(curl -s https://api.github.com/repos/moltis-org/moltis/releases/latest 
 VERSION="${LATEST#v}"
 
 # Download and install
-curl -LO "https://github.com/YOUR_USERNAME/moltis-termux/releases/download/${LATEST}-termux/moltis-${VERSION}-aarch64-unknown-linux-musl.tar.gz"
+curl -LO "https://github.com/Muxd21/moltisdroid/releases/download/${LATEST}-termux/moltis-${VERSION}-aarch64-unknown-linux-musl.tar.gz"
 tar -xzf "moltis-${VERSION}-aarch64-unknown-linux-musl.tar.gz"
 chmod +x moltis-termux/moltis
 mv moltis-termux/moltis $PREFIX/bin/moltis
@@ -26,7 +26,7 @@ rm -rf moltis-termux "moltis-${VERSION}-aarch64-unknown-linux-musl.tar.gz"
 ### Quick Install (Latest)
 
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/YOUR_USERNAME/moltis-termux/main/install.sh)
+bash <(curl -sL https://raw.githubusercontent.com/Muxd21/moltisdroid/main/install.sh)
 ```
 
 ## Usage
@@ -43,7 +43,7 @@ This repository checks for new releases from [moltis-org/moltis](https://github.
 
 ## Manual Trigger
 
-You can manually trigger a build using the "Run workflow" button on the [Actions tab](https://github.com/YOUR_USERNAME/moltis-termux/actions).
+You can manually trigger a build using the "Run workflow" button on the [Actions tab](https://github.com/Muxd21/moltisdroid/actions).
 
 ## Binary Details
 

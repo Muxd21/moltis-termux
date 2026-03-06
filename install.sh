@@ -33,12 +33,12 @@ VERSION="${LATEST#v}"
 echo "Latest moltis version: ${VERSION}"
 
 # Download the musl binary
-DOWNLOAD_URL="https://github.com/YOUR_USERNAME/moltis-termux/releases/download/${LATEST}-termux/moltis-${VERSION}-aarch64-unknown-linux-musl.tar.gz"
+DOWNLOAD_URL="https://github.com/Muxd21/moltisdroid/releases/download/${LATEST}-termux/moltis-${VERSION}-aarch64-unknown-linux-musl.tar.gz"
 echo -e "${YELLOW}Downloading from: $DOWNLOAD_URL${NC}"
 
 if ! curl -sL "$DOWNLOAD_URL" -o "moltis-${VERSION}-musl.tar.gz"; then
     echo -e "${RED}Error: Download failed${NC}"
-    echo "Make sure the release exists at: https://github.com/YOUR_USERNAME/moltis-termux/releases"
+    echo "Make sure the release exists at: https://github.com/Muxd21/moltisdroid/releases"
     exit 1
 fi
 

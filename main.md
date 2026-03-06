@@ -12,7 +12,7 @@ Automated GitHub Actions workflow that builds static musl binaries of [moltis](h
 ## Quick Install
 
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/YOUR_USERNAME/moltis-termux/main/install.sh)
+bash <(curl -sL https://raw.githubusercontent.com/Muxd21/moltisdroid/main/install.sh)
 ```
 
 ## How It Works
