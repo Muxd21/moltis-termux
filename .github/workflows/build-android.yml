@@ -132,7 +132,7 @@ jobs:
         run: |
           cd moltis-src
           # Build with Android target using Bionic libc
-          cargo ndk -t aarch64-linux-android -p moltis --release
+          cargo ndk -t aarch64-linux-android build --release -p moltis
 
       - name: Verify binary
         run: |
