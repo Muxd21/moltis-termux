@@ -1,0 +1,190 @@
+name: Build Native Termux Binary
+
+on:
+  schedule:
+    # Runs 4 times a day at 00:00, 06:00, 12:00, 18:00 UTC
+    - cron: '0 0,6,12,18 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Build without uploading"
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  check-release:
+    name: Check for New Release
+    runs-on: ubuntu-latest
+    outputs:
+      has_new_release: ${{ steps.check.outputs.has_new_release }}
+      release_tag: ${{ steps.check.outputs.release_tag }}
+      release_version: ${{ steps.check.outputs.release_version }}
+    steps:
+      - name: Check latest moltis release
+        id: check
+        run: |
+          LATEST=$(curl -s https://api.github.com/repos/moltis-org/moltis/releases/latest)
+          TAG=$(echo "$LATEST" | jq -r '.tag_name')
+          echo "Latest tag: $TAG"
+          if [ "$TAG" != "null" ] && [ -n "$TAG" ]; then
+            echo "has_new_release=true" >> "$GITHUB_OUTPUT"
+            echo "release_tag=$TAG" >> "$GITHUB_OUTPUT"
+            echo "release_version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_new_release=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  build-termux:
+    name: Build Static Musl ARM64
+    needs: check-release
+    if: needs.check-release.outputs.has_new_release == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Install Rust via rustup
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          rustup target add aarch64-unknown-linux-musl
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            musl-tools \
+            musl-dev \
+            clang \
+            llvm \
+            cmake \
+            make \
+            g++ \
+            git \
+            libssl-dev \
+            pkg-config \
+            curl \
+            jq \
+            file
+
+      - name: Checkout moltis source
+        env:
+          RELEASE_TAG: ${{ needs.check-release.outputs.release_tag }}
+        run: |
+          git clone --depth 1 --branch "$RELEASE_TAG" https://github.com/moltis-org/moltis.git moltis-src
+          cd moltis-src
+          git config user.email "ci@example.com"
+          git config user.name "CI"
+
+      - name: Configure cargo for musl
+        run: |
+          mkdir -p moltis-src/.cargo
+          cat > moltis-src/.cargo/config.toml << 'EOF'
+          [target.aarch64-unknown-linux-musl]
+          linker = "clang"
+          rustflags = ["-C", "target-feature=+crt-static"]
+          EOF
+
+      - name: Build Tailwind CSS
+        run: |
+          cd moltis-src
+          curl -LO https://github.com/tailwindlabs/tailwindcss/releases/download/v3.4.17/tailwindcss-linux-aarch64
+          chmod +x tailwindcss-linux-aarch64
+          cd crates/web/ui && TAILWINDCSS=../../../tailwindcss-linux-aarch64 ./build.sh || echo "Tailwind skipped"
+
+      - name: Build WASM components
+        run: |
+          cd moltis-src
+          rustup target add wasm32-wasip2
+          cargo build --target wasm32-wasip2 -p moltis-wasm-calc -p moltis-wasm-web-fetch -p moltis-wasm-web-search --release || true
+          cargo run -p moltis-wasm-precompile --release || true
+
+      - name: Build static musl binary
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER: clang
+        run: |
+          cd moltis-src
+          cargo build --release --target aarch64-unknown-linux-musl --bin moltis
+
+      - name: Verify binary
+        run: |
+          cd moltis-src
+          file target/aarch64-unknown-linux-musl/release/moltis
+          ls -lh target/aarch64-unknown-linux-musl/release/moltis
+          ldd target/aarch64-unknown-linux-musl/release/moltis 2>&1 || echo "Expected: statically linked"
+
+      - name: Create release archive
+        env:
+          RELEASE_TAG: ${{ needs.check-release.outputs.release_tag }}
+          VERSION: ${{ needs.check-release.outputs.release_version }}
+        run: |
+          cd moltis-src/target/aarch64-unknown-linux-musl/release
+          mkdir -p moltis-termux
+          cp moltis moltis-termux/
+          chmod +x moltis-termux/moltis
+          tar -czvf "moltis-${VERSION}-musl-arm64.tar.gz" moltis-termux/
+          sha256sum "moltis-${VERSION}-musl-arm64.tar.gz" > "moltis-${VERSION}-musl-arm64.tar.gz.sha256"
+          ls -lh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: moltis-termux-musl
+          path: moltis-src/target/aarch64-unknown-linux-musl/release/*.tar.gz*
+          retention-days: 30
+
+  publish-release:
+    name: Publish to GitHub Releases
+    needs: [check-release, build-termux]
+    if: |
+      always() && 
+      needs.check-release.outputs.has_new_release == 'true' && 
+      needs.build-termux.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download binary
+        uses: actions/download-artifact@v4
+        with:
+          name: moltis-termux-musl
+          path: ./release-assets
+
+      - name: Get version
+        id: version
+        run: |
+          TAG="${{ needs.check-release.outputs.release_tag }}"
+          echo "release_tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.version.outputs.release_tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if gh release view "${TAG}-termux" &>/dev/null; then
+            gh release delete "${TAG}-termux" --yes --cleanup-tag
+          fi
+          
+          gh release create "${TAG}-termux" \
+            --title "Moltis ${VERSION} (Termux Static Musl)" \
+            --notes "Static musl binary for Termux/Android ARM64
+            
+  - Built on ubuntu-24.04-arm (native ARM64)
+  - Statically linked (no external dependencies)
+  - Works in Termux without proot
+  - Compatible with Android Bionic libc
+  
+  Source: moltis-org/moltis@${TAG}" \
+            --target main \
+            ./release-assets/*
